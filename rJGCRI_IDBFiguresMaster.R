@@ -239,10 +239,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
   
   for (year_i in years) {
     
-    dfCommonScale<-df%>%dplyr::select(-c(lat,lon,Type))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
-    
-    
+   
     df1<-subset(df,select=c(lat,lon,get(year_i),Type))
     df1<-dcast(df1,lat+lon~Type,value.var=year_i,fun.aggregate=sum,na.rm=F);head(df1)
     
@@ -265,6 +262,9 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     gridded(df3)<-TRUE  # Create Gridded Raster Data
     gridded(dfxtra)<-TRUE
     dfxtra<<-dfxtra
+    
+    dfCommonScale<-df3@data%>%dplyr::select(-c(lat,lon,moduleRemove))
+    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     #---------------------------------------------
     #----- For each year compare Demands by Sector
@@ -333,7 +333,6 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     # By Admin Region
     #____________________
     
-    head(df3)
     
     dxp<-data.frame()
     for (type in unique(df$Type)){
@@ -383,7 +382,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_BySectorByAdminRegion_",gsub("X","",year_i),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(NAME_1))
+    dfCommonScale<-dxp%>%dplyr::select(-c(NAME_1,moduleRemove))
     if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     #---------------------------------------------
@@ -501,7 +500,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
 write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_BySectorByBasinRegion_",gsub("X","",year_i),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(basin_name))
+    dfCommonScale<-dxp%>%dplyr::select(-c(basin_name,moduleRemove))
     if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     #---------------------------------------------
@@ -621,7 +620,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
 write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_i,"_",moduleParam,"_BySectorBysubBasinRegion_",gsub("X","",year_i),".csv",sep=""),row.names=F)
       }
       
-      dfCommonScale<-dxp%>%dplyr::select(-c(subBasin_name))
+      dfCommonScale<-dxp%>%dplyr::select(-c(subBasin_name,moduleRemove))
       if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
       
       #---------------------------------------------
@@ -697,16 +696,16 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
   
   types<-unique(df$Type)
   
+  
   for (type in types){
     
+    dfCommonScale<-df%>%dplyr::filter(!(Type %in% moduleRemove))
+    dfCommonScale<-df%>%dplyr::select(-c(lat,lon,Type))
+    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     #____________________
     # GRIDDED
     #____________________
-    
-    dfCommonScale<-df%>%dplyr::select(-c(lat,lon,Type))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
-    
     
     # Gridded Boundary
     df1<-subset(df,select=c("lat","lon",years,"Type"))
@@ -828,9 +827,9 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
 
     # Common scales for all non-agricultural demands
     
-    if(!type %in% c("Total","Non_Agriculture")){
-      dfgridX<-subset(df[(df$Type!="Total" & df$Type!="Non_Agriculture"),],select=years)
-      dfgridY<-subset(df[(df$Type!="Total" & df$Type!="Non_Agriculture"),],select=c(years,"Type"))
+   
+      dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
+      
       
       fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")  
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -840,13 +839,17 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
                      figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
       #---- Animation File
-      if(animationsOn==1){
-        fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems.gif",sep="")
-        if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                          filename=fname,width=NA,height=NA,delay=delay)
-          selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-      }
+        if(animationsOn==1){
+          fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems.gif",sep="") 
+          if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+            animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
+                            filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
+            animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
+                            filename=fname,width=NA,height=NA,delay=delay)
+            print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
+                         dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
+            selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
+        }
       }
       
       fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
@@ -868,7 +871,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }
     }
-    }
+
     
     #____________________
     # By ADMIN Region
@@ -925,7 +928,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
 write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_ByAdminRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(NAME_1))
+    dfCommonScale<-dxp%>%dplyr::select(-c(NAME_1,moduleRemove))
     if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     shpa.x<-shpa1
@@ -977,8 +980,8 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }
     # Common scales for all non-agricultural demands
     
-    if(!type %in% c("Total","Non_Agriculture")){
-      dfgridX<-subset(df[(df$Type!="Total" & df$Type!="Non_Agriculture"),],select=years)
+    dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
+    
       
       fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -990,11 +993,14 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
       if(animationsOn==1){
         fname<-paste(dir,"/anim_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems.gif",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                        filename=fname,width=NA,height=NA,delay=delay)
+          animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
+                          filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
+          animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
+                          filename=fname,width=NA,height=NA,delay=delay)
+          print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
+                       dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-      }
-      }
+      }}
       
       fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -1013,8 +1019,8 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
           print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
                        dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-      }
-    }
+      }}
+    
     
     
     #____________________
@@ -1071,7 +1077,7 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
 write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_ByBasinRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(basin_name))
+    dfCommonScale<-dxp%>%dplyr::select(-c(basin_name,moduleRemove))
     if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     shpa.x<-shpbasin1
@@ -1120,9 +1126,8 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }}
     # Common scales for all non-agricultural demands
     
-    if(!type %in% c("Total","Non_Agriculture")){
-      dfgridX<-subset(df[(df$Type!="Total" & df$Type!="Non_Agriculture"),],select=years)
-      
+    dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
+    
       fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map<- m7 + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
@@ -1159,14 +1164,12 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }
     }
-    }
+    
     
     if(bySubBasin==1){
       #____________________
       # By subBasin Region
       #____________________
-      
-      
       
       head(df3)
       
@@ -1218,7 +1221,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
 write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_BysubBasinRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
       }
       
-      dfCommonScale<-dxp%>%dplyr::select(-c(subBasin_name))
+      dfCommonScale<-dxp%>%dplyr::select(-c(subBasin_name,moduleRemove))
       if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
       
       shpa.x<-shpsubBasin1
@@ -1247,8 +1250,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
                        dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }
-      }}
-      
+      }
       
       #KMEANS
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS",sep="")
@@ -1268,9 +1270,8 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       }}
       # Common scales for all non-agricultural demands
       
-      if(!type %in% c("Total","Non_Agriculture")){
-        dfgridX<-subset(df[(df$Type!="Total" & df$Type!="Non_Agriculture"),],select=years)
-        
+      dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
+      
         fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         map<- m7 + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
@@ -1288,7 +1289,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
             print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
                          dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-        }
+        }}
         
         fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -1309,9 +1310,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
         }
         }
-      }
-      }
-    } # Close bySubBasin
+      }# Close bySubBasin
   } # Close Type
 } # Close Mapping Function
 
