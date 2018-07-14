@@ -1,2 +1,2 @@
-# rzk_ScriptsMaster
-R scripts to create figures and maps
+# rJGCRI CHarts Maps Colors
+R scripts to create figures and maps and color schemes
