@@ -39,11 +39,11 @@
 # Various color schemes to try to standardize figures.
 
 # General purpose color scheme where sequentail colors do not clash too much
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7",
+cbPalette <<- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7",
 "#333333", "#FFCC00", "#CC6600", "#006600", "#3333CC", "#CC0033", "#0099CC", "#999966")
 
 # Color scheme for electricity generation by aggregate fuel
-elec_tech_colors <- c( "a Coal" = "#a0237c",
+elec_tech_colors <<- c( "a Coal" = "#a0237c",
     "b Coal w/CCS" = "#dab4c7",
     "c Gas" = "#25a9e0",
     "d Gas w/CCS" = "#84e7f9",
@@ -60,7 +60,7 @@ elec_tech_colors <- c( "a Coal" = "#a0237c",
     "o Battery" = "#92a75d",
     "energy reduction" = "grey")
 
-elec_renew_colors <- c( "liquids" = "#d01c2a",
+elec_renew_colors <<- c( "liquids" = "#d01c2a",
 "gas" = "#25a9e0",
 "coal" = "#a0237c",
 "biomass" = "#00931d",
@@ -79,7 +79,7 @@ elec_renew_colors <- c( "liquids" = "#d01c2a",
 "energy reduction" = "grey")
 
 # Buildings colors by fuel
-building_colors <- c( "liquids" = "#d01c2a",
+building_colors <<- c( "liquids" = "#d01c2a",
     "gas" = "#25a9e0",
     "coal" = "#a0237c",
     "biomass" = "#00931d",
@@ -87,7 +87,7 @@ building_colors <- c( "liquids" = "#d01c2a",
     "trad biomass" = "#11d081")
 
 # Transportation colors by fuel
-trn_fuel_colors <- c( "liquids" = "#d01c2a",
+trn_fuel_colors <<- c( "liquids" = "#d01c2a",
     "gas" = "#25a9e0",
     "coal" = "#a0237c",
     "biomass" = "#00931d",
@@ -95,7 +95,7 @@ trn_fuel_colors <- c( "liquids" = "#d01c2a",
     "hydrogen" = "#fffbac")
 
 # Generic end-use color scheme by numbered fuel
-enduse_fuel_numbered <- c( "1 liquids" = "#d01c2a",
+enduse_fuel_numbered <<- c( "1 liquids" = "#d01c2a",
     "2 gas" = "#25a9e0",
     "3 coal" = "#a0237c",
     "4 biomass" = "#00931d",
@@ -107,11 +107,11 @@ enduse_fuel_numbered <- c( "1 liquids" = "#d01c2a",
     "energy reduction" = "grey")
 
 # Color scheme for the aggregate final demands
-enduse_colors <- c( "building" = "#facda4", "industry" = "#cef4d1", "transportation" = "#d0f6f7",
+enduse_colors <<- c( "building" = "#facda4", "industry" = "#cef4d1", "transportation" = "#d0f6f7",
     "energy reduction" = "grey")
 
 # Primary energy colors including CCS
-PAL_pri_ene <- c(
+PAL_pri_ene <<- c(
     "a oil" = "#d01c2a",
     "a oil CCS" = "#f7988f",
     "b natural gas" = "#25a9e0",
@@ -129,14 +129,14 @@ PAL_pri_ene <- c(
     "energy reduction" = "grey")
 
 # Color scheme for primary fuel costs
-PAL_pri_fuelcost <- c( "regional oil" = "#d01c2a",
+PAL_pri_fuelcost <<- c( "regional oil" = "#d01c2a",
     "regional natural gas" = "#25a9e0",
     "regional coal" = "#a0237c",
     "regional biomass" = "#00931d",
     "nuclearFuelGenIII" = "#ef8e27")
 
 # Colors for emissions by aggregate sector
-PAL_emiss_sector <- c( "liquid systems" = "#d01c2a",
+PAL_emiss_sector <<- c( "liquid systems" = "#d01c2a",
     "gas systems" = "#25a9e0",
     "coal" = "#a0237c",
     "biomass systems" = "#00931d",
@@ -149,7 +149,7 @@ PAL_emiss_sector <- c( "liquid systems" = "#d01c2a",
     "transportation"="#d0f6f7")
 
 # Aggregated (more that usual) land use
-PAL_landuse<- c( "urban" = "#000000",
+PAL_landuse<<- c( "urban" = "#000000",
     "crops" = "#ffd125",
     "pasture (grazed)" = "#aacf22",
     "forest (managed)" = "#41a67a",
@@ -160,7 +160,7 @@ PAL_landuse<- c( "urban" = "#000000",
     "desert" = "#a7a7a7")
 
 # And hydrogen even
-PAL_hydrogen <- c( "gas" = "#25a9e0",
+PAL_hydrogen <<- c( "gas" = "#25a9e0",
     "gas w/CCS" = "#84e7f9",
     "coal" = "#a0237c",
     "coal w/CCS" = "#dab4c7",
@@ -173,7 +173,7 @@ PAL_hydrogen <- c( "gas" = "#25a9e0",
     "energy reduction" = "grey")
 
 # Refined liquids
-PAL_refliq <- c( "conventional oil" = "#ab4500",
+PAL_refliq <<- c( "conventional oil" = "#ab4500",
     "unconventional oil" = "#ff9593",
     "coal" = "#ff2600",
     "coal w/CCS" = "#ff8d78",
@@ -183,18 +183,164 @@ PAL_refliq <- c( "conventional oil" = "#ab4500",
     "energy reduction" = "grey")
 
 # Color scheme for emissions by aggregate sector
-emiss_by_enduse_colors <- c( "buildings" = "#facda4",
+emiss_by_enduse_colors <<- c( "buildings" = "#facda4",
     "industry" = "#cef4d1",
     "transportation" = "#d0f6f7",
     "electricity" = "#ea9219",
     "cement" = "#ff230e")
 
 # Color scheme for biomass consumption by use
-biouse_colors <- c( "direct buildings" = "#a8d8fe",
+biouse_colors <<- c( "direct buildings" = "#a8d8fe",
 "industry" = "#0080d4",
 "electricity" = "#ec931a",
 "refining" = "#aa4a79",
 "hydrogen" = "#fffbac",
 "synthetic gas" = "#ff230e", 
 "energy reduction" = "grey")
+
+#------------------------------------------
+# New Color Schemes
+#-------------------------------------------
+
+
+# Custom Colors for large unassigned palettes
+# Custom Colors https://stackoverflow.com/questions/15282580/how-to-generate-a-number-of-most-distinctive-colors-in-r
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+colorsX_Unassigned= unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+
+
+# Color scheme for electricity generation by aggregate fuel
+colorsX_elec_subsec <<- c( "coal" = "#a0237c","gas" = "#25a9e0","oil" = "#d01c2a","biomass" = "#00931d",
+                           "nuclear" = "#ef8e27",
+                           "geothermal" = "#ad440c",
+                           "hydro" = "#fdfa28",
+                           "wind" = "#3d86f9",
+                           "solar" = "#fdd67b",
+                           "refined liquids" = "#507fab",
+                           "electricity" = "grey40")
+
+pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_subsec.pdf",sep=""))  # Print Colors for reference
+pie(rep(1,length(colorsX_elec_subsec)),label=names(colorsX_elec_subsec),col=colorsX_elec_subsec)
+dev.off()
+
+colorsX_elec_techs <<- c( "Gen_III" = "#af8e27",
+                          "Gen_II_LWR" = "#ef8e27",
+                          "CSP" = "#cdd67b",
+                          "PV" = "#fdd67b",
+                          "biomass (IGCC CCS)" = "#00a31d",
+                          "biomass (IGCC)" = "#00c31d",
+                          "biomass (conv CCS)" = "#00e31d",
+                          "biomass (conv)" = "#00f31d",
+                          "coal (IGCC CCS)" = "#c0237c",
+                          "coal (IGCC)" = "#f0237c",
+                          "coal (conv pul CCS)" = "#e0237c",
+                          "coal (conv pul)" = "#a0237c",
+                          "gas (CC CCS)" = "#25c9e0",
+                          "gas (CC)" = "#25a9e0",
+                          "gas (CT)" = "#25e9e0",
+                          "gas (steam)" = "#25f9e0",
+                          "hydro" = "#fdfa28",
+                          "refined liquids (CC CCS)" = "#000000",
+                          "refined liquids (CC)" = "#000000",
+                          "refined liquids (CT)" = "#000000",
+                          "refined liquids (steam)" = "#000000",
+                          "wind" = "#0000ff",
+                          "red","green",unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))))
+
+
+pie(rep(1,length(colorsX_elec_techs)),label=names(colorsX_elec_techs),col=colorsX_elec_techs)
+pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_techs.pdf",sep=""))  # Print Colors for reference
+pie(rep(1,length(colorsX_elec_techs)),label=names(colorsX_elec_techs),col=colorsX_elec_techs)
+dev.off()
+
+
+colorsX_elec_sec<<-c( "elect_td_bld" = "#ff230e",
+                      "elect_td_ind" = "darkolivegreen4",
+                      "elect_td_trn" = "dodgerblue",
+                      "electricity" = "#ea9219")
+
+pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_sec.pdf",sep=""))  # Print Colors for reference
+pie(rep(1,length(colorsX_elec_sec)),label=names(colorsX_elec_sec),col=colorsX_elec_sec)
+dev.off()
+
+
+colorsX_finalNrg_sec<<-c( "building" = "#facda4",
+                          "comm non-building" = "#ff230e",
+                          "industry" = "#cef4d1",
+                          "transportation" = "#d0f6f7")
+
+# Custom Colors for large unassigned palettes
+# Custom Colors https://stackoverflow.com/questions/15282580/how-to-generate-a-number-of-most-distinctive-colors-in-r
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+colorsX_Unassigned= unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+
+
+# Color scheme for electricity generation by aggregate fuel
+colorsX_elec_subsec <- c( "coal" = "#a0237c","gas" = "#25a9e0","oil" = "#d01c2a","biomass" = "#00931d",
+                          "nuclear" = "#ef8e27",
+                          "geothermal" = "#ad440c",
+                          "hydro" = "#fdfa28",
+                          "wind" = "#3d86f9",
+                          "solar" = "#fdd67b",
+                          "refined liquids" = "#507fab")
+
+# Print Colors palettes to view for reference
+pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_subsec.pdf",sep=""))  
+pie(rep(1,length(colorsX_elec_subsec)),label=names(colorsX_elec_subsec),col=colorsX_elec_subsec)
+dev.off()
+
+# Modified color scheme for Primary energy consumption
+# Modified the "Primary energy colors including CCS - PAL_pri_ene" color scheme from color_scheme.R 
+# Changed hydro to current wind color(blue), switched solar to current hydro color(yellow)
+# switched wind to current solar color (biege), 
+# switched gas & gas CCS too a lighter blue because hydro and gas were too similar
+colorsX_PAL_pri_ene<- c(
+  "a oil" = "#d01c2a",
+  "a oil CCS" = "#f7988f",
+  "b natural gas" = "darkslategray1",
+  "b natural gas CCS" = "darkslategray4",
+  "c coal" = "gray60",
+  "c coal CCS" = "gray20",
+  "d biomass" = "#00931d",
+  "d biomass CCS" = "#88c892",
+  "e nuclear" = "#ef8e27",
+  "f hydro" = "#3d86f9",
+  "g wind" = "#fdd67b",
+  "h solar" = "#fdfa28",
+  "i geothermal" = "#ad440c",
+  "j traditional biomass" = "#11d081",
+  "energy reduction" = "black")
+
+# Print Colors palettes to view for reference
+pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  
+pie(rep(1,length(colorsX_PAL_pri_ene)),label=names(colorsX_PAL_pri_ene),col=colorsX_PAL_pri_ene)
+dev.off()
+
+# Modified color scheme for elec
+# Modified the "Primary energy colors including CCS - PAL_pri_ene" color scheme from color_scheme.R 
+# Changed hydro to current wind color(blue), switched solar to current hydro color(yellow)
+# switched wind to current solar color (biege), 
+# switched gas & gas CCS too a lighter blue because hydro and gas were too similar
+# switched coal to grays and changed energy reduction to black
+colorsX_elec_tech_colors <- c( "a Coal" = "gray60",
+                               "b Coal w/CCS" = "gray20",
+                               "c Gas" = "darkslategray1",
+                               "d Gas w/CCS" = "darkslategray4",
+                               "e Oil" = "#d01c2a",
+                               "f Oil w/CCS" = "#f7988f",
+                               "g Biomass" = "#00931d",
+                               "h Biomass w/CCS" = "#88c892",
+                               "i Nuclear" = "#ef8e27",
+                               "j Geothermal" = "#ad440c",
+                               "k Hydro" = "#3d86f9",
+                               "l Wind" = "#fdd67b",
+                               "m Solar" = "#fdfa28",
+                               "n CHP" = "#507fab",
+                               "o Battery" = "#92a75d",
+                               "energy reduction" = "grey")
+
+# Print Colors palettes to view for reference
+pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  
+pie(rep(1,length(colorsX_elec_tech_colors)),label=names(colorsX_elec_tech_colors),col=colorsX_elec_tech_colors)
+dev.off()
 

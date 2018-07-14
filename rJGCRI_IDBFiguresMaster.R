@@ -31,49 +31,50 @@ memory.limit(size=1E+10)
 # NaturalEarth - State Boundaires and Provinces for a simpler smaller file http://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/
 # PNNL Basins/Regions - Chris Vernon Data - Chris.vernon@pnnl.gov From: /pic/projects/GCAM/gcam_hydrology/boundaries
 
+
 #______________________
 # Select parameters and regions
 #______________________
 
-region_i<-regionAnalysis
-scenarios<-scenariosAnalysis
-gcamDatabaseName<-gcamDatabaseNameAnalysis
+region_i<<-regionAnalysis
+scenarios<<-scenariosAnalysis
+gcamDatabaseName<<-gcamDatabaseNameAnalysis
 
-rangeX<-seq(2005,2050,by=5)
-yearsX<-paste("X",rangeX,sep="")  # To put in format that is read in from tethys and Demeter
-years_analysisXanthos<-seq(1950,2005,by=1) # For Xanthos
-yearsXanthos<-paste("X",years_analysisXanthos,sep="")  # To put in format that is read in from tethys
+rangeX<<-seq(2005,2050,by=5)
+yearsX<<-paste("X",rangeX,sep="")  # To put in format that is read in from tethys and Demeter
+years_analysisXanthos<<-seq(1950,2005,by=1) # For Xanthos
+yearsXanthos<<-paste("X",years_analysisXanthos,sep="")  # To put in format that is read in from tethys
 
 
 
-delay=60 # Animation delay
-colx<-(brewer.pal(5,"YlOrRd")) #------Choose color palette
+delay<<-60 # Animation delay
+colx<<-(brewer.pal(5,"YlOrRd")) #------Choose color palette
 
 # Chart Details
-titleOn<-0 # 1 for yes, 0 for no
-useNewLabels<- 1 # 1 for new modified labels without letter prefix and capitalized
-prettyBreaksyMaster<-5
-breakx_majMaster<-10
-breakx_minMaster<-5
+titleOn<<-0 # 1 for yes, 0 for no
+useNewLabels<<- 1 # 1 for new modified labels without letter prefix and capitalized
+prettyBreaksyMaster<<-5
+breakx_majMaster<<-10
+breakx_minMaster<<-5
 
 # PDF details
-figWidth_InchMaster<-13
-figWidth_StateCharts_Multplier<-1.5
-figWidth_FreeScale_Multplier<-1.2
-figHeight_InchMaster<-9
+figWidth_InchMaster<<-13
+figWidth_StateCharts_Multplier<<-1.5
+figWidth_FreeScale_Multplier<<-1.2
+figHeight_InchMaster<<-9
 pdfpng='png'  #'pdf', 'png', or 'both'
 
 # Map PDF details
-mapWidthInch<-10
-mapHeightInch<-8
+mapWidthInch<<-10
+mapHeightInch<<-8
 
 #______________________
 # Select Report figures
 #______________________
 
-selectFigsparams<-c()
+selectFigsparams<<-c()
 ## NOTE: Region will be substituted for each region analyzed
-selectFigsparams<-c("map_basemaps_m5_Region_regionalMap",
+selectFigsparams<<-c("map_basemaps_m5_Region_regionalMap",
                     "map_basemaps_m6_Region_regionalMapBasinsProvinces",
                     "map_basemaps_m1_Region_provincialLabelled",
                     "map_basemaps_m3_Region_basinsLabelledCropped",
@@ -106,8 +107,8 @@ selectFigsparams<-c("map_basemaps_m5_Region_regionalMap",
                     "map_scarcity_grid_Region_scarcityFrac_BySector_2005_KMEANS",
                     "map_scarcity_polyAdmin_Region_scarcityFrac_BySector_FREESCALE_Mean_2005to2100_KMEANS",
                     "map_scarcity_polysubBasin_Region_scarcityFrac_BySector_FREESCALE_Mean_2005to2100_KMEANS")
-selectFigsparams<-gsub("Region",region_i,selectFigsparams);
-selectedFigs<-c()
+selectFigsparams<<-gsub("Region",region_i,selectFigsparams);
+selectedFigs<<-c()
 
 #______________________
 # Working Direcotries and Data
@@ -144,11 +145,11 @@ if(file.exists("queryData.proj")){file.remove("queryData.proj")} # Delete old pr
 for (scenario_i in scenarios){
 queryData.proj<<-addScenario(conn=connx, proj="queryData.proj",scenario=scenario_i,queryFile='analysis_queries.xml')  # Check your queries file
 }}else{
-queryData.proj<-loadProject("queryData.proj")  # Use already saved database
+queryData.proj<<-loadProject("queryData.proj")  # Use already saved database
 }
 
-lscen<-listScenarios(queryData.proj);lscen
-lquer<-listQueries(queryData.proj);lquer
+lscen<<-listScenarios(queryData.proj);lscen
+lquer<<-listQueries(queryData.proj);lquer
 #getQuery(queryData.proj,"Primary Energy Consumption (Direct Equivalent")   # Check a Query
 
 
@@ -176,7 +177,7 @@ LookupTable_PNNL32Region<<-data.frame(reg32_id=c(0:32),
                                                    "South America Northern","South America_Southern","South Asia","South Korea",
                                                    "Southeast Asia","Taiwan","Argentina","Colombia"))
 
-shp_PNNL32Reg@data<-join(shp_PNNL32Reg@data,LookupTable_PNNL32Region,by=c("reg32_id")); head(shp_PNNL32Reg@data)
+shp_PNNL32Reg@data <-join(shp_PNNL32Reg@data,LookupTable_PNNL32Region,by=c("reg32_id")); head(shp_PNNL32Reg@data)
 
 #SubBasins
 
@@ -210,7 +211,10 @@ shp_HydroBasinsLev4<<-spTransform(shp_HydroBasinsLev4, CRS(projX))
 # New Functions
 #______________________
 
-source(paste(here(),"/rZK_scriptsMaster.R"))
+# source function file
+source(paste(wdScripts,"/rJGCRI_ChartsMaps.R",sep=""))
+
+
 
 #--------------------------
 # Main Mapping function
