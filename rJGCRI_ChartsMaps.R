@@ -1,7 +1,6 @@
 #***********
 # Contact: Zarrar Khan (zarrar.khan@pnnl.gov)
 # Project: General 
-# File: rZK_scriptsMaster.R
 # *********
 
 
@@ -14,29 +13,8 @@
 memory.limit(size=1E+10)
 
 #______________________
-# A.2 Libraries
+# PDF/PNG/Anim Save functions
 #______________________
-
-# If you don't have dev tools
-#install.packages("devtools") 
-# Rtools https://cran.r-project.org/bin/windows/Rtools/ 
-# devtools::install_github("hadley/devtools"))
-
-# Install libraries
-
-install.packages('spDataLarge', repos='https://nowosad.github.io/drat/', type='source')
-
-packagesX<-c("ggplot2","RColorBrewer","reshape2","magrittr","plyr","dplyr","tools","scales","rgdal",
-             "rgeos","raster","tmap","animation","tis","tibble","here","classInt")
-for(i in packagesX){if(i %in% rownames(installed.packages()) == FALSE) {install.packages(i)};library(i,character.only = TRUE)}
-
-#Additional Libraries
-if("rgcam" %in% rownames(installed.packages()) == FALSE) {devtools::install_github('JGCRI/rgcam')};library(rgcam)
-
-# Download Pakcage ncdf4 zip file from http://cirrus.ucsd.edu/~pierce/ncdf/
-if(!file.exists("D:/software/ncdf4_1.12.zip")){print("ncdf zip package not available. Donwload and keep in folder.")}
-if("ncdf4" %in% rownames(installed.packages()) == FALSE){install.packages("D:/software/ncdf4_1.12.zip", repos = NULL)};library(ncdf4)
-
 
 #-------- Print pdf and png figures
 print_PDFPNG <<- function(figure,dir,filename, figWidth_Inch=mapWidthInch, figHeight_Inch=mapHeightInch,pdfpng=pdfpng){
@@ -372,11 +350,15 @@ mapX_rasterFreeScaleKMeans<<-function(rasterBoundary=dfxtra,data=dfx){
 }
 
 
-sizeCheck<<-function(){dfsize<-data.frame()
+
+sizeCheck<<-function(){
+dfsize<-data.frame()
 for (thing in ls()) { 
   ds<-data.frame(Object=thing,SizeGB=(as.numeric(object.size(get(thing)))/1000000000));
   dfsize<-rbind.data.frame(dfsize,ds)
 }
 dfsize<-dfsize%>%dplyr::arrange(-SizeGB);head(dfsize,20); sum(dfsize$SizeGB)
-return(dfsize); return(sum(dfsize$SizeGB))
+print(getwd());print(head(dfsize,10)); print(sum(dfsize$SizeGB))
 }
+
+

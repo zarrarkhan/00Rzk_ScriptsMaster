@@ -213,7 +213,7 @@ shp_HydroBasinsLev4<<-spTransform(shp_HydroBasinsLev4, CRS(projX))
 
 # source function file
 source(paste(wdScripts,"/rJGCRI_ChartsMaps.R",sep=""))
-
+source(paste(wdScripts,"/rJGCRI_gis.R",sep=""))
 
 
 #--------------------------
@@ -244,10 +244,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     df1<-dcast(df1,lat+lon~Type,value.var=year_i,fun.aggregate=sum,na.rm=F);head(df1)
     
     # Convert to Spatial Point Data Frames
-    df1 = SpatialPointsDataFrame(
-      SpatialPoints(coords=(cbind(df1$lon,df1$lat))),
-      data=df1
-    )
+    df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
     proj4string(df1)<-projX
     
     #____________________
@@ -263,8 +260,8 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     gridded(dfxtra)<-TRUE
     dfxtra<<-dfxtra
     
-    dfCommonScale<-df3@data%>%dplyr::select(-c(lat,lon,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+    dfCommonScaleYears<-df3@data%>%dplyr::select(-c(lat,lon,moduleRemove))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
     
     #---------------------------------------------
     #----- For each year compare Demands by Sector
@@ -282,7 +279,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map <- mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map <- mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         m8+if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -293,7 +290,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     #KMEANS
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map <- mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScale) + tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map <- mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         m8+ if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -333,57 +330,15 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     # By Admin Region
     #____________________
     
-    
-    dxp<-data.frame()
-    for (type in unique(df$Type)){
-      r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(type);head(r)
-      r<-raster(r)
-      projection(r)<-projX
-      rcrop<-raster::intersect(r,b1)
-      rcropP<-rasterToPolygons(rcrop)
-      
-      if(moduleAggType=="depth"){
-        x<-raster::intersect(shpa1,rcropP);plot(x);
-        x@data$area<-area(x); head(x@data)
-        s1<-shpa1
-        s1$subRegAreaSum<-area(shpa1);head(s1)
-        s1<-s1@data%>%dplyr::select(NAME_1,subRegAreaSum);head(s1)
-        x@data<-join(x@data,s1,by="NAME_1");head(x)
-        x@data$areaPrcnt<-x@data$area/x@data$subRegAreaSum;
-        x@data$WeightedParam<-x@data%>%dplyr::select(type)*x@data%>%dplyr::select(areaPrcnt);head(x)
-        ## MEAN
-        dxpX<- x@data %>% subset(select=c("WeightedParam","NAME_1")) %>%
-          group_by(NAME_1) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-type
-      }
-      if(moduleAggType=="vol"){
-        w <- raster::extract(r,shpa1, method="simple",weights=T, normalizeWeights=F);head(w)
-        dfx<-data.frame()
-        for (i in seq(w)){
-          x<-as.data.frame(w[[i]])
-          x$ID<-shpa1@data$NAME_1[[i]]
-          x$WeightedParam<-x$value*x$weight
-          #assign(paste0("df", i), x)
-          dfx<-rbind.data.frame(dfx,x)
-        }
-        names(dfx)[names(dfx)=="ID"]<-"NAME_1";head(dfx)
-        ## SUM
-        dxpX<- dfx %>% subset(select=c("WeightedParam","NAME_1")) %>%
-          group_by(NAME_1) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-type
-      }
-      if(names(dxpX)[2]==unique(df$Type)[1]){dxp<-dxpX}else{dxp<-join(dxp,dxpX,by="NAME_1")};head(dxp)
-    }
-    dxpbyAdmin<-dxp
+    head(df3)
+    dxpbyAdmin<<-spatAgg_gridded2shape(gridded=df3,shape=shpa1,byLev="NAME_1",boundBox=b1,moduleAggType=moduleAggType)
     head(dxpbyAdmin)
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
     write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_BySectorByAdminRegion_",gsub("X","",year_i),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(NAME_1,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+    dfCommonScaleYears<<-dxpbyAdmin%>%dplyr::select(-c(NAME_1,moduleRemove))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
     
     #---------------------------------------------
     #----- For each year_i compare Demands by Sector (By Admin Region)
@@ -397,7 +352,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Provinces",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -408,7 +363,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     #KMEANS
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Provinces",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -452,56 +407,14 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     
     # Basin Boundary
     head(df3)
-    
-    dxp<-data.frame()
-    for (type in unique(df$Type)){
-      r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(type);head(r)
-      r<-raster(r)
-      projection(r)<-projX
-      rcrop<-raster::intersect(r,b1)
-      rcropP<-rasterToPolygons(rcrop)
-      
-      if(moduleAggType=="depth"){
-        x<-raster::intersect(shpbasin1,rcropP);plot(x);
-        x@data$area<-area(x); head(x@data)
-        s1<-shpbasin1
-        s1$subRegAreaSum<-area(shpbasin1);head(s1)
-        s1<-s1@data%>%dplyr::select(basin_name,subRegAreaSum);head(s1)
-        x@data<-join(x@data,s1,by="basin_name");head(x)
-        x@data$areaPrcnt<-x@data$area/x@data$subRegAreaSum;
-        x@data$WeightedParam<-x@data%>%dplyr::select(type)*x@data%>%dplyr::select(areaPrcnt);head(x)
-        ## MEAN
-        dxpX<- x@data %>% subset(select=c("WeightedParam","basin_name")) %>%
-          group_by(basin_name) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-type
-      }
-      if(moduleAggType=="vol"){
-        w <- raster::extract(r,shpbasin1, method="simple",weights=T, normalizeWeights=F);head(w)
-        dfx<-data.frame()
-        for (i in seq(w)){
-          x<-as.data.frame(w[[i]])
-          x$ID<-shpbasin1@data$basin_name[[i]]
-          x$WeightedParam<-x$value*x$weight
-          #assign(paste0("df", i), x)
-          dfx<-rbind.data.frame(dfx,x)
-        }
-        names(dfx)[names(dfx)=="ID"]<-"basin_name";head(dfx)
-        ## SUM
-        dxpX<- dfx %>% subset(select=c("WeightedParam","basin_name")) %>%
-          group_by(basin_name) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-type
-      }
-      if(names(dxpX)[2]==unique(df$Type)[1]){dxp<-dxpX}else{dxp<-join(dxp,dxpX,by="basin_name")};head(dxp)
-    }
-    dxpbyBasin<-dxp; head(dxpbyBasin)
+    dxpbyBasin<<-spatAgg_gridded2shape(gridded=df3,shape=shpbasin1,byLev="basin_name",boundBox=b1,moduleAggType=moduleAggType)
+    head(dxpbyBasin)
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
 write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_BySectorByBasinRegion_",gsub("X","",year_i),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(basin_name,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+    dfCommonScaleYears<<-dxpbyBasin%>%dplyr::select(-c(basin_name,moduleRemove))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
     
     #---------------------------------------------
     #----- For each year_i compare Demands by Sector (By Basin Region)
@@ -515,7 +428,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Basins",sep=""))}
       map
       print_PDFPNG(map,dir=dir,fname,
@@ -526,7 +439,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     #KMEANS
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Basins",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -573,55 +486,14 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
       # subBasin Boundary
       head(df3)
       
-      dxp<-data.frame()
-      for (type in unique(df$Type)){
-        r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(type);head(r)
-        r<-raster(r)
-        projection(r)<-projX
-        rcrop<-raster::intersect(r,b1)
-        rcropP<-rasterToPolygons(rcrop)
-        
-        if(moduleAggType=="depth"){
-          x<-raster::intersect(shpsubBasin1,rcropP);plot(x);
-          x@data$area<-area(x); head(x@data)
-          s1<-shpsubBasin1
-          s1$subRegAreaSum<-area(shpsubBasin1);head(s1)
-          s1<-s1@data%>%dplyr::select(subBasin_name,subRegAreaSum);head(s1)
-          x@data<-join(x@data,s1,by="subBasin_name");head(x)
-          x@data$areaPrcnt<-x@data$area/x@data$subRegAreaSum;
-          x@data$WeightedParam<-x@data%>%dplyr::select(type)*x@data%>%dplyr::select(areaPrcnt);head(x)
-          ## MEAN
-          dxpX<- x@data %>% subset(select=c("WeightedParam","subBasin_name")) %>%
-            group_by(subBasin_name) %>% 
-            summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-          names(dxpX)[names(dxpX)=="WeightedParam"]<-type
-        }
-        if(moduleAggType=="vol"){
-          w <- raster::extract(r,shpsubBasin1, method="simple",weights=T, normalizeWeights=F);head(w)
-          dfx<-data.frame()
-          for (i in seq(w)){
-            x<-as.data.frame(w[[i]])
-            x$ID<-shpsubBasin1@data$subBasin_name[[i]]
-            x$WeightedParam<-x$value*x$weight
-            #assign(paste0("df", i), x)
-            dfx<-rbind.data.frame(dfx,x)
-          }
-          names(dfx)[names(dfx)=="ID"]<-"subBasin_name";head(dfx)
-          ## SUM
-          dxpX<- dfx %>% subset(select=c("WeightedParam","subBasin_name")) %>%
-            group_by(subBasin_name) %>% 
-            summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-          names(dxpX)[names(dxpX)=="WeightedParam"]<-type
-        }
-        if(names(dxpX)[2]==unique(df$Type)[1]){dxp<-dxpX}else{dxp<-join(dxp,dxpX,by="subBasin_name")};head(dxp)
-      }
-      dxpbysubBasin<-dxp; head(dxpbysubBasin)
+      dxpbysubBasin<<-spatAgg_gridded2shape(gridded=df3,shape=shpsubBasin1,byLev="subBasin_name",boundBox=b1,moduleAggType=moduleAggType)
+      head(dxpbysubBasin)
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
 write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_i,"_",moduleParam,"_BySectorBysubBasinRegion_",gsub("X","",year_i),".csv",sep=""),row.names=F)
       }
       
-      dfCommonScale<-dxp%>%dplyr::select(-c(subBasin_name,moduleRemove))
-      if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+      dfCommonScaleYears<<-dxpbysubBasin%>%dplyr::select(-c(subBasin_name,moduleRemove))
+      if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
       
       #---------------------------------------------
       #----- For each year_i compare Demands by Sector (By Admin Region)
@@ -635,7 +507,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+        map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
           if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," subBasins",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -645,7 +517,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       #KMEANS
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScale)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+        map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
           if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," subBasins",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -692,16 +564,80 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
   #---------------------------------------------------------------------------
   #---------------------------------------------------------------------------
   
+  
+  # Common scales Across all years removing totals or other non-wanted categories
+
+    #------------------
+    # Admin 1 Scale from Maximum Values across Types
+    #----------------
+    
+    # Gridded Boundary
+    df1<-subset(df,select=c("lat","lon",years,"Type"))%>%dplyr::filter(!(Type %in% moduleRemove))
+  
+    # Convert to Spatial Point Data Frames
+    df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
+    proj4string(df1)<-projX
+    
+    # Crop to the Regional file shpa boundary
+    df3<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
+    gridded(df3)<-TRUE
+    
+    dfCommonScaleYearsAllTypes<-df3@data
+    
+    # GRIDDED 1 SCALE (Maximum values across grid cells for all selected Types)
+    df1ScaleGridLatLon<<- df3@data %>%dplyr::select(-c(Type))%>%
+      group_by(lat,lon) %>% 
+      summarise_all(funs(max(.,na.rm=T))) %>% as.data.frame
+    head(df1ScaleGridLatLon)
+    
+    df1ScaleGrid<<-df1ScaleGridLatLon %>% dplyr::select(-c(lat,lon))
+    head(df1ScaleGrid);max(df1ScaleGrid)
+   
+    #------------------
+    # Admin 1 Scale from Maximum Values across Types
+    #----------------
+    
+    # Gridded Boundary
+    df1<-df1ScaleGridLatLon
+    # Convert to Spatial Point Data Frames
+    df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
+    proj4string(df1)<-projX
+    # Crop to the Regional file shpa boundary
+    df3<-raster::crop(df1,b1);plot(df3)  # Crop to Layer shpa
+    gridded(df3)<-TRUE # Create Gridded Data
+    head(df3@data);max(df3@data)
+    
+    # Aggregate Data spatially by spatial level
+    df1ScaleAdminx<<-spatAgg_gridded2shape(gridded=df3,shape=shpa1,byLev="NAME_1",boundBox=b1,
+                                           moduleAggType=moduleAggType)
+    head(df1ScaleAdminx);max(df1ScaleAdminx[,2:ncol(df1ScaleAdminx)])
+    
+    #------------------
+    # Basin 1 Scale
+    #-----------------
+    
+    df1ScaleBasinx<<-spatAgg_gridded2shape(gridded=df3,shape=shpbasin1,byLev="basin_name",boundBox=b1,
+                                           moduleAggType=moduleAggType)
+    head(df1ScaleBasinx);max(df1ScaleBasinx)
+    
+    if(bySubBasin==1){
+    #------------------
+    # subBasin 1 Scale
+    #----------------
+    
+    df1ScalesubBasnix<<-spatAgg_gridded2shape(gridded=df3,shape=shpsubBasin1,byLev="subBasin_name",boundBox=b1,
+                                             moduleAggType=moduleAggType)
+    
+    head(df1ScalesubBasinx);max(df1ScalesubBasinx)
+    }
+    
+    
   years<-yearsOriginal;
   
   types<-unique(df$Type)
   
   
   for (type in types){
-    
-    dfCommonScale<-df%>%dplyr::filter(!(Type %in% moduleRemove))
-    dfCommonScale<-df%>%dplyr::select(-c(lat,lon,Type))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
     
     #____________________
     # GRIDDED
@@ -726,6 +662,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     df3<-df2
     gridded(df3)<-TRUE # Create Gridded Data
     dfxtra<<-dfxtra
+    
     
     yearsOriginal<-years
     if(meanYearOnly==1){years<-years[length(years)]}
@@ -774,21 +711,47 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       }}
     }
     
+    #------------------
+    # Plot Gridded
+    #-----------------
+    
+    dfCommonScaleYears<-dfCommonScaleYearsAllTypes%>%dplyr::filter(!(Type %in% moduleRemove))
+    dfCommonScaleYears<-dfCommonScaleYearsAllTypes%>%dplyr::filter(Type == type)
+    dfCommonScaleYears<-dfCommonScaleYearsAllTypes%>%dplyr::select(-c(lat,lon,Type))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    
+    # Gridded Boundary
+    df1<-subset(df,select=c("lat","lon",years,"Type"))
+    df1<-df1[df1$Type==type,]
+    df1<-subset(df1,select=-c(Type))
+    
+    # Convert to Spatial Point Data Frames
+    df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
+    proj4string(df1)<-projX
+    
+    # Crop to the Regional file shpa boundary
+    df2<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
+    dfxtra<<-raster::intersect(df1,b1);plot(dfxtra) #create larger boundary extents for plotting in tmap
+    gridded(dfxtra)<-TRUE
+    df3<-df2
+    gridded(df3)<-TRUE # Create Gridded Data
+    dfxtra<<-dfxtra
+    
     years<-yearsOriginal;
     dfx<-df3
     dfx@data<-subset(dfx@data,select=c(years))  # Choose the years
     dfx@data<-dfx@data%>%dplyr::select(-contains("Mean"))  # Remove mean year
     
-    fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),sep="")
+    fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScale)+m8+tm_legend(title=moduleUnits)+
+      map<-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
         if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
       map
       print_PDFPNG(map,dir=dir,filename=fname,
                    figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
       selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
     if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),".gif",sep="")
+      fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
                         filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
@@ -802,9 +765,9 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
 
 ##ZTEST    
     # KMEANS
-    fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS",sep="")
+    fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScale)+m8+tm_legend(title=moduleUnits)+
+      map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
         if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -812,7 +775,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
     #---- Animation File
     if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS.gif",sep="")
+      fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
                         filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
@@ -828,8 +791,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     # Common scales for all non-agricultural demands
     
    
-      dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
-      
+      dfgridX<-df1ScaleGrid
       
       fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")  
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -877,59 +839,16 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     # By ADMIN Region
     #____________________
     
-    
     head(df3)
     
-    dxp<-data.frame()
-    for (year_i in years){
-      r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(year_i);head(r)
-      r<-raster(r)
-      projection(r)<-projX
-      rcrop<-raster::intersect(r,b1)
-      rcropP<-rasterToPolygons(rcrop)
-      
-      if(moduleAggType=="depth"){
-        x<-raster::intersect(shpa1,rcropP);plot(x);
-        x@data$area<-area(x); head(x@data)
-        s1<-shpa1
-        s1$subRegAreaSum<-area(shpa1);head(s1)
-        s1<-s1@data%>%dplyr::select(NAME_1,subRegAreaSum);head(s1)
-        x@data<-join(x@data,s1,by="NAME_1");head(x)
-        x@data$areaPrcnt<-x@data$area/x@data$subRegAreaSum;
-        x@data$WeightedParam<-x@data%>%dplyr::select(year_i)*x@data%>%dplyr::select(areaPrcnt);head(x)
-        ## MEAN
-        dxpX<- x@data %>% subset(select=c("WeightedParam","NAME_1")) %>%
-          group_by(NAME_1) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-year_i
-      }
-      if(moduleAggType=="vol"){
-        w <- raster::extract(r,shpa1, method="simple",weights=T, normalizeWeights=F);head(w)
-        dfx<-data.frame()
-        for (i in seq(w)){
-          x<-as.data.frame(w[[i]])
-          x$ID<-shpa1@data$NAME_1[[i]]
-          x$WeightedParam<-x$value*x$weight
-          #assign(paste0("df", i), x)
-          dfx<-rbind.data.frame(dfx,x)
-        }
-        names(dfx)[names(dfx)=="ID"]<-"NAME_1";head(dfx)
-        ## SUM
-        dxpX<- dfx %>% subset(select=c("WeightedParam","NAME_1")) %>%
-          group_by(NAME_1) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-year_i
-      }
-      if(names(dxpX)[2]==years[1]){dxp<-dxpX}else{dxp<-join(dxp,dxpX,by="NAME_1")};head(dxp)
-    }
-    dxpbyAdmin<-dxp
+    dxpbyAdmin<<-spatAgg_gridded2shape(gridded=df3,shape=shpa1,byLev="NAME_1",boundBox=b1,moduleAggType=moduleAggType)
     head(dxpbyAdmin)
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
 write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_ByAdminRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(NAME_1,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+    dfCommonScaleYears<<-dxpbyAdmin%>%dplyr::select(-c(NAME_1))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
     
     shpa.x<-shpa1
     shpa.x@data<-join(shpa.x@data,dxpbyAdmin,by=c("NAME_1")) %>% 
@@ -937,16 +856,16 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     dfx<-shpa.x
     dfx@data<-dfx@data%>%dplyr::select(-contains("Mean"))  # Remove mean year
     
-    fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),sep="")
+    fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-    map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScale) + tm_legend(title=moduleUnits) +
+    map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
       if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Province",sep=""))} 
     map
     print_PDFPNG(map,dir=dir,fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
     selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
     #---- Animation File
     if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),".gif",sep="")
+      fname<-paste(dir,"/anim_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
                         filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
@@ -960,17 +879,19 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     
     # KMEANS 
     
-    fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS",sep="")
+    fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-    map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScale) + tm_legend(title=moduleUnits) +
+    map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
     if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Province",sep=""))} 
     map
     print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
     selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
         #---- Animation File
     if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS.gif",sep="")
+      fname<-paste(dir,"/anim_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"KMEANS_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
+                        filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
         animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
                         filename=fname,width=NA,height=NA,delay=delay)
         print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
@@ -978,11 +899,12 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
     }
     }
-    # Common scales for all non-agricultural demands
     
-    dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
     
-      
+   #1Scale Across Types
+    
+    dfgridX<-df1ScaleAdmin
+    
       fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map<- m7 + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
@@ -1028,57 +950,15 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     #____________________
     
     head(df3)
-    
-    dxp<-data.frame()
-    for (year_i in years){
-      r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(year_i);head(r)
-      r<-raster(r)
-      projection(r)<-projX
-      rcrop<-raster::intersect(r,b1)
-      rcropP<-rasterToPolygons(rcrop)
-      
-      if(moduleAggType=="depth"){
-        x<-raster::intersect(shpbasin1,rcropP);plot(x);
-        x@data$area<-area(x); head(x@data)
-        s1<-shpbasin1
-        s1$subRegAreaSum<-area(shpbasin1);head(s1)
-        s1<-s1@data%>%dplyr::select(basin_name,subRegAreaSum);head(s1)
-        x@data<-join(x@data,s1,by="basin_name");head(x)
-        x@data$areaPrcnt<-x@data$area/x@data$subRegAreaSum;
-        x@data$WeightedParam<-x@data%>%dplyr::select(year_i)*x@data%>%dplyr::select(areaPrcnt);head(x)
-        ## MEAN
-        dxpX<- x@data %>% subset(select=c("WeightedParam","basin_name")) %>%
-          group_by(basin_name) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-year_i
-      }
-      if(moduleAggType=="vol"){
-        w <- raster::extract(r,shpbasin1, method="simple",weights=T, normalizeWeights=F);head(w)
-        dfx<-data.frame()
-        for (i in seq(w)){
-          x<-as.data.frame(w[[i]])
-          x$ID<-shpbasin1@data$basin_name[[i]]
-          x$WeightedParam<-x$value*x$weight
-          #assign(paste0("df", i), x)
-          dfx<-rbind.data.frame(dfx,x)
-        }
-        names(dfx)[names(dfx)=="ID"]<-"basin_name";head(dfx)
-        ## SUM
-        dxpX<- dfx %>% subset(select=c("WeightedParam","basin_name")) %>%
-          group_by(basin_name) %>% 
-          summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-        names(dxpX)[names(dxpX)=="WeightedParam"]<-year_i
-      }
-      if(names(dxpX)[2]==years[1]){dxp<-dxpX}else{dxp<-join(dxp,dxpX,by="basin_name")};head(dxp)
-    }
-    dxpbyBasin<-dxp
+     
+    dxpbyBasin<<-spatAgg_gridded2shape(gridded=df3,shape=shpbasin1,byLev="basin_name",boundBox=b1,moduleAggType=moduleAggType)
     head(dxpbyBasin)
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
 write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_ByBasinRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScale<-dxp%>%dplyr::select(-c(basin_name,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+    dfCommonScaleYears<<-dxpbyBasin%>%dplyr::select(-c(basin_name))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
     
     shpa.x<-shpbasin1
     shpa.x@data<-join(shpa.x@data,dxpbyBasin,by=c("basin_name")) %>% 
@@ -1086,16 +966,16 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     dfx<-shpa.x
     dfx@data<-dfx@data%>%dplyr::select(-contains("Mean"))  # Remove mean year
     
-    fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),sep="")
+    fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-    map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScale) + tm_legend(title=moduleUnits) +
+    map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
       if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Basin",sep=""))}
     map
     print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
     selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
     #---- Animation File
     if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),".gif",sep="")
+      fname<-paste(dir,"/anim_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
                         filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
@@ -1107,16 +987,16 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }}
     
     #KMEANS
-    fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS",sep="")
+    fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-    map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScale) + tm_legend(title=moduleUnits) +
+    map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
       if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Basin",sep=""))}
     map
     print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
     selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
     #---- Animation File
     if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS.gif",sep="")
+      fname<-paste(dir,"/anim_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
                         filename=fname,width=NA,height=NA,delay=delay)
@@ -1124,9 +1004,9 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
                      dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
     }}
-    # Common scales for all non-agricultural demands
+    # 1 scales for all non-agricultural demands
     
-    dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
+    dfgridX<-df1ScaleBasin
     
       fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -1172,57 +1052,15 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
       #____________________
       
       head(df3)
-      
-      dxp<-data.frame()
-      for (year_i in years){
-        r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(year_i);head(r)
-        r<-raster(r)
-        projection(r)<-projX
-        rcrop<-raster::intersect(r,b1)
-        rcropP<-rasterToPolygons(rcrop)
-        
-        if(moduleAggType=="depth"){
-          x<-raster::intersect(shpsubBasin1,rcropP);plot(x);
-          x@data$area<-area(x); head(x@data)
-          s1<-shpsubBasin1
-          s1$subRegAreaSum<-area(shpsubBasin1);head(s1)
-          s1<-s1@data%>%dplyr::select(subBasin_name,subRegAreaSum);head(s1)
-          x@data<-join(x@data,s1,by="subBasin_name");head(x)
-          x@data$areaPrcnt<-x@data$area/x@data$subRegAreaSum;
-          x@data$WeightedParam<-x@data%>%dplyr::select(year_i)*x@data%>%dplyr::select(areaPrcnt);head(x)
-          ## MEAN
-          dxpX<- x@data %>% subset(select=c("WeightedParam","subBasin_name")) %>%
-            group_by(subBasin_name) %>% 
-            summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-          names(dxpX)[names(dxpX)=="WeightedParam"]<-year_i
-        }
-        if(moduleAggType=="vol"){
-          w <- raster::extract(r,shpsubBasin1, method="simple",weights=T, normalizeWeights=F);head(w)
-          dfx<-data.frame()
-          for (i in seq(w)){
-            x<-as.data.frame(w[[i]])
-            x$ID<-shpsubBasin1@data$subBasin_name[[i]]
-            x$WeightedParam<-x$value*x$weight
-            #assign(paste0("df", i), x)
-            dfx<-rbind.data.frame(dfx,x)
-          }
-          names(dfx)[names(dfx)=="ID"]<-"subBasin_name";head(dfx)
-          ## SUM
-          dxpX<- dfx %>% subset(select=c("WeightedParam","subBasin_name")) %>%
-            group_by(subBasin_name) %>% 
-            summarise_all(funs(round(sum(.,na.rm=T),2))) %>% as.data.frame
-          names(dxpX)[names(dxpX)=="WeightedParam"]<-year_i
-        }
-        if(names(dxpX)[2]==years[1]){dxp<-dxpX}else{dxp<-join(dxp,dxpX,by="subBasin_name")};head(dxp)
-      }
-      dxpbysubBasin<-dxp
+     
+      dxpbysubBasin<<-spatAgg_gridded2shape(gridded=df3,shape=shpsubBasin1,byLev="subBasin_name",boundBox=b1,moduleAggType=moduleAggType)
       head(dxpbysubBasin)
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
 write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_BysubBasinRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
       }
       
-      dfCommonScale<-dxp%>%dplyr::select(-c(subBasin_name,moduleRemove))
-      if(moduleName=="scarcity"){dfCommonScale[dfCommonScale > 1]<-1}
+      dfCommonScaleYears<<-dxpbysubBasin%>%dplyr::select(-c(subBasin_name))
+      if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
       
       shpa.x<-shpsubBasin1
       shpa.x@data<-join(shpa.x@data,dxpbysubBasin,by=c("subBasin_name")) %>% 
@@ -1230,9 +1068,9 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       dfx<-shpa.x
       dfx@data<-dfx@data%>%dplyr::select(-contains("Mean"))  # Remove mean year
       
-      fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),sep="")
+      fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScale) + tm_legend(title=moduleUnits) +
+      map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
         if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by subBasin",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -1240,7 +1078,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
       #---- Animation File
       if(animationsOn==1){
-        fname<-paste(dir,"/subBasin/anim_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),".gif",sep="")
+        fname<-paste(dir,"/subBasin/anim_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE.gif",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
           animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
                           filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
@@ -1253,24 +1091,29 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       }
       
       #KMEANS
-      fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS",sep="")
+      fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScale) + tm_legend(title=moduleUnits) +
+      map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
         if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by subBasin",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
       selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
       #---- Animation File
       if(animationsOn==1){
-        fname<-paste(dir,"/subBasin/anim_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS.gif",sep="")
+        fname<-paste(dir,"/subBasin/anim_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE.gif",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                        filename=fname,width=NA,height=NA,delay=delay)
+          animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
+                          filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
+          animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
+                          filename=fname,width=NA,height=NA,delay=delay)
+          print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
+                       dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-      }}
+      }
+      }
       # Common scales for all non-agricultural demands
       
-      dfgridX<-df%>%dplyr::filter(!(Type %in% moduleRemove))%>%dplyr::select(years)
+      dfgridX<-df1ScalesubBasin
       
         fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -1748,6 +1591,10 @@ plot(shp0a)
 
 # Regional Selected Region
 shpa<<-shp[which(shp$GCAM_region==region_i),]
+if(region_i=="Argentina"){  # FOR ARGENTINA MERGE Ciudad de Buenos Aires into Buenos Aires
+  shpa@data$NAME_1[which(shpa@data$NAME_1=="Ciudad de Buenos Aires")]<-"Buenos Aires"
+  shpa<-aggregate(shpa, by= "NAME_1")
+}
 shpa@data<-droplevels(shpa@data)
 shpa<<-shpa
 plot(shpa)
@@ -1777,6 +1624,10 @@ plot(shpb)
 
 # GADM Boundaries Selected Region
 shpa1<<-shp1[which(shp1$NAME_0==region_i),]
+if(region_i=="Argentina"){  # FOR ARGENTINA MERGE Ciudad de Buenos Aires into Buenos Aires
+  shpa1@data$NAME_1[which(shpa1@data$NAME_1=="Ciudad de Buenos Aires")]<-"Buenos Aires"
+  shpa1<-aggregate(shpa1, by= "NAME_1")
+}
 shpa1@data<-droplevels(shpa1@data)
 shpa1<<-shpa1
 plot(shpa1)
@@ -1816,7 +1667,7 @@ plot(shpsubBasin1)
 shpsubBasin1<<-shpsubBasin1
 dev.off()
 
-# Dissolve subbasins in Colombia to 41 Hydrological Zones
+# Dissolve subbasins
 shpsubBasin<-aggregate(shpsubBasin, by= "subBasin_name")
 shpsubBasin<<-shpsubBasin
 plot(shpsubBasin)
