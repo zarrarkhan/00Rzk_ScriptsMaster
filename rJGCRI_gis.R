@@ -24,6 +24,7 @@ spatAgg_gridded2shape<<- function(gridded=df3,shape=shpa1,byLev="NAME_1",boundBo
                                   ) {
 
 #gridded=df3;shape=shpa1;byLev="NAME_1";boundBox=b1;moduleAggType=moduleAggType
+#gridded=df3;shape=shpsubBasin1;byLev="subBasin_name";boundBox=b1;moduleAggType=moduleAggType
   
 colsx<-names(gridded@data%>%dplyr::select(-c(lat,lon)));colsx 
 dxp<-data.frame()

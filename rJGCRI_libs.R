@@ -17,7 +17,7 @@
 if("spDataLarge" %in% rownames(installed.packages()) == FALSE){install.packages('spDataLarge', repos='https://nowosad.github.io/drat/', type='source')}
 
 packagesX<-c("ggplot2","RColorBrewer","reshape2","magrittr","plyr","dplyr","tools","scales","rgdal",
-             "rgeos","raster","tmap","animation","tis","tibble","here","classInt")
+             "rgeos","raster","tmap","animation","tis","tibble","here","classInt","tidyr")
 for(i in packagesX){if(i %in% rownames(installed.packages()) == FALSE) {install.packages(i)};library(i,character.only = TRUE)}
 
 #Additional Libraries

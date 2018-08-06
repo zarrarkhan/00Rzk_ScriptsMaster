@@ -1,6 +1,6 @@
 #***********
 # Contact: Zarrar Khan (zarrar.khan@pnnl.gov)
-# Project: IDB Argentina
+# Project: IDB
 # File: rgcam_Figures.R
 # *********
 
@@ -37,7 +37,8 @@ memory.limit(size=1E+10)
 #______________________
 
 region_i<<-regionAnalysis
-scenarios<<-scenariosAnalysis
+scenariosIndv<<-scenariosIndvAnalysis
+scenariosComp<<-scenariosAnalysis
 gcamDatabaseName<<-gcamDatabaseNameAnalysis
 
 rangeX<<-seq(2005,2050,by=5)
@@ -142,7 +143,7 @@ connx<<- localDBConn(wddb, myDB)    # Connect to database
 # Add scenarios to the project
 if(reReadData==1){
 if(file.exists("queryData.proj")){file.remove("queryData.proj")} # Delete old project file
-for (scenario_i in scenarios){
+for (scenario_i in scenariosComp){
 queryData.proj<<-addScenario(conn=connx, proj="queryData.proj",scenario=scenario_i,queryFile='analysis_queries.xml')  # Check your queries file
 }}else{
 queryData.proj<<-loadProject("queryData.proj")  # Use already saved database
@@ -260,8 +261,9 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     gridded(dfxtra)<-TRUE
     dfxtra<<-dfxtra
     
-    dfCommonScaleYears<-df3@data%>%dplyr::select(-c(lat,lon,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    dfCommonScaleYears<<-df3@data%>%dplyr::select(-c(lat,lon,moduleRemove))
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1};
+    head(dfCommonScaleYears) ;max(dfCommonScaleYears)
     
     #---------------------------------------------
     #----- For each year compare Demands by Sector
@@ -269,7 +271,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     
     dfx<-df3
     dfx@data<-subset(dfx@data,select=c(unique(df$Type)))  # Choose the Sectors
-    if(moduleRemove!=c("")){dfx@data<-dfx@data%>%dplyr::select(-moduleRemove)}
+    if(!is.null(moduleRemove)){dfx@data<-dfx@data%>%dplyr::select(-moduleRemove)}
     
     # Remove outliers (anything greater than 5 sd from mean, replace with NA)
     #m<-as.matrix(dfx@data)
@@ -338,7 +340,8 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     }
     
     dfCommonScaleYears<<-dxpbyAdmin%>%dplyr::select(-c(NAME_1,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}
+    head(dfCommonScaleYears) ;max(dfCommonScaleYears)
     
     #---------------------------------------------
     #----- For each year_i compare Demands by Sector (By Admin Region)
@@ -347,7 +350,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     shpa.x<-shpa1
     shpa.x@data<-join(shpa.x@data,dxpbyAdmin,by=c("NAME_1")) %>% 
       subset(select=c(unique(df$Type),"NAME_1")) %>%dplyr::select(-c(NAME_1));
-    if(moduleRemove!=c("")){shpa.x@data<-shpa.x@data%>%dplyr::select(-moduleRemove)}
+    if(!is.null(moduleRemove)){shpa.x@data<-shpa.x@data%>%dplyr::select(-moduleRemove)}
     dfx<-shpa.x
     
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
@@ -414,7 +417,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }
     
     dfCommonScaleYears<<-dxpbyBasin%>%dplyr::select(-c(basin_name,moduleRemove))
-    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}
     
     #---------------------------------------------
     #----- For each year_i compare Demands by Sector (By Basin Region)
@@ -423,7 +426,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     shpa.x<-shpbasin1
     shpa.x@data<-join(shpa.x@data,dxpbyBasin,by=c("basin_name")) %>% 
       subset(select=c(unique(df$Type),"basin_name")) %>% subset(select=-c(basin_name));
-    if(moduleRemove!=c("")){shpa.x@data<-shpa.x@data%>%dplyr::select(-moduleRemove)}
+    if(!is.null(moduleRemove)){shpa.x@data<-shpa.x@data%>%dplyr::select(-moduleRemove)}
     dfx<-shpa.x
     
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
@@ -493,7 +496,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       }
       
       dfCommonScaleYears<<-dxpbysubBasin%>%dplyr::select(-c(subBasin_name,moduleRemove))
-      if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+      if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}
       
       #---------------------------------------------
       #----- For each year_i compare Demands by Sector (By Admin Region)
@@ -502,7 +505,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       shpa.x<-shpsubBasin1
       shpa.x@data<-join(shpa.x@data,dxpbysubBasin,by=c("subBasin_name")) %>% 
         subset(select=c(unique(df$Type),"subBasin_name")) %>% subset(select=-c(subBasin_name));
-      if(moduleRemove!=c("")){shpa.x@data<-shpa.x@data%>%dplyr::select(-moduleRemove)}
+      if(!is.null(moduleRemove)){shpa.x@data<-shpa.x@data%>%dplyr::select(-moduleRemove)}
       dfx<-shpa.x
       
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
@@ -570,22 +573,26 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     #------------------
     # Admin 1 Scale from Maximum Values across Types
     #----------------
+  
+  years<-yearsOriginal
+    
     
     # Gridded Boundary
-    df1<-subset(df,select=c("lat","lon",years,"Type"))%>%dplyr::filter(!(Type %in% moduleRemove))
-  
+    df1<-subset(df,select=c("lat","lon",years,"Type"))
     # Convert to Spatial Point Data Frames
     df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
     proj4string(df1)<-projX
-    
     # Crop to the Regional file shpa boundary
-    df3<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
+    df3<-raster::intersect(df1,b1);
     gridded(df3)<-TRUE
     
-    dfCommonScaleYearsAllTypes<-df3@data
+    dfCommonScaleYearsAllTypesTotal<-df3@data
+    dfCommonScaleYearsAllTypes<-dfCommonScaleYearsAllTypesTotal%>%dplyr::filter(!(Type %in% moduleRemove))
+    
+    df3@data<-df3@data%>%dplyr::filter(!(Type %in% moduleRemove))
     
     # GRIDDED 1 SCALE (Maximum values across grid cells for all selected Types)
-    df1ScaleGridLatLon<<- df3@data %>%dplyr::select(-c(Type))%>%
+    df1ScaleGridLatLon<<- df3@data%>%dplyr::select(-c(Type))%>%
       group_by(lat,lon) %>% 
       summarise_all(funs(max(.,na.rm=T))) %>% as.data.frame
     head(df1ScaleGridLatLon)
@@ -608,27 +615,32 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     head(df3@data);max(df3@data)
     
     # Aggregate Data spatially by spatial level
-    df1ScaleAdminx<<-spatAgg_gridded2shape(gridded=df3,shape=shpa1,byLev="NAME_1",boundBox=b1,
+    df1ScaleAdmin<<-spatAgg_gridded2shape(gridded=df3,shape=shpa1,byLev="NAME_1",boundBox=b1,
                                            moduleAggType=moduleAggType)
-    head(df1ScaleAdminx);max(df1ScaleAdminx[,2:ncol(df1ScaleAdminx)])
+    df1ScaleAdmin<-df1ScaleAdmin%>%dplyr::select(-contains("NAME_1"))
+    df1ScaleAdmin<-df1ScaleAdmin%>%dplyr::select(-contains("Mean"))
+    head(df1ScaleAdmin);max(df1ScaleAdmin[,2:ncol(df1ScaleAdmin)])
     
     #------------------
     # Basin 1 Scale
     #-----------------
     
-    df1ScaleBasinx<<-spatAgg_gridded2shape(gridded=df3,shape=shpbasin1,byLev="basin_name",boundBox=b1,
+    df1ScaleBasin<<-spatAgg_gridded2shape(gridded=df3,shape=shpbasin1,byLev="basin_name",boundBox=b1,
                                            moduleAggType=moduleAggType)
-    head(df1ScaleBasinx);max(df1ScaleBasinx)
+    df1ScaleBasin<-df1ScaleBasin%>%dplyr::select(-contains("basin_name"))
+    df1ScaleBasin<-df1ScaleBasin%>%dplyr::select(-contains("Mean"))
+    head(df1ScaleBasin);max(df1ScaleBasin[,2:ncol(df1ScaleBasin)])
     
     if(bySubBasin==1){
     #------------------
     # subBasin 1 Scale
     #----------------
     
-    df1ScalesubBasnix<<-spatAgg_gridded2shape(gridded=df3,shape=shpsubBasin1,byLev="subBasin_name",boundBox=b1,
+    df1ScalesubBasin<<-spatAgg_gridded2shape(gridded=df3,shape=shpsubBasin1,byLev="subBasin_name",boundBox=b1,
                                              moduleAggType=moduleAggType)
-    
-    head(df1ScalesubBasinx);max(df1ScalesubBasinx)
+    df1ScalesubBasin<-df1ScalesubBasin%>%dplyr::select(-contains("subBasin_name"))
+    df1ScalesubBasin<-df1ScalesubBasin%>%dplyr::select(-contains("Mean"))
+    head(df1ScalesubBasin);max(df1ScalesubBasin[,2:ncol(df1ScalesubBasin)])
     }
     
     
@@ -646,6 +658,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     # Gridded Boundary
     df1<-subset(df,select=c("lat","lon",years,"Type"))
     df1<-df1[df1$Type==type,]
+    if(nrow(df1)>0){
     df1<-subset(df1,select=-c(Type))
     
     # Convert to Spatial Point Data Frames
@@ -663,8 +676,6 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     gridded(df3)<-TRUE # Create Gridded Data
     dfxtra<<-dfxtra
     
-    
-    yearsOriginal<-years
     if(meanYearOnly==1){years<-years[length(years)]}
     for (year_i in years){
       r<-df3;r@data<-r@data%>%dplyr::select(-lat,-lon)%>%dplyr::select(year_i)
@@ -715,11 +726,16 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     # Plot Gridded
     #-----------------
     
-    dfCommonScaleYears<-dfCommonScaleYearsAllTypes%>%dplyr::filter(!(Type %in% moduleRemove))
-    dfCommonScaleYears<-dfCommonScaleYearsAllTypes%>%dplyr::filter(Type == type)
-    dfCommonScaleYears<-dfCommonScaleYearsAllTypes%>%dplyr::select(-c(lat,lon,Type))
-    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    if(type %in% moduleRemove){
+      dfCommonScaleYears<<-dfCommonScaleYearsAllTypesTotal%>%
+        dplyr::filter(Type == type)%>%
+        dplyr::select(-c(lat,lon,Type))}else{
+      dfCommonScaleYears<<-dfCommonScaleYearsAllTypes%>%dplyr::filter(!(Type %in% moduleRemove))%>%
+                        dplyr::filter(Type == type)%>%
+                        dplyr::select(-c(lat,lon,Type))}
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}; max(dfCommonScaleYears)
     
+    years<-yearsOriginal;
     # Gridded Boundary
     df1<-subset(df,select=c("lat","lon",years,"Type"))
     df1<-df1[df1$Type==type,]
@@ -765,6 +781,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
 
 ##ZTEST    
     # KMEANS
+    if(sd(as.matrix(dfCommonScaleYears))!=0){
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
@@ -786,9 +803,11 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
     }
     }
+    }
     
 
-    # Common scales for all non-agricultural demands
+    if(!(type %in% moduleRemove)){
+    # Common scales for all selected types (excluding things like total or non-agriculture)
     
    
       dfgridX<-df1ScaleGrid
@@ -814,6 +833,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
         }
       }
       
+      if(sd(as.matrix(dfCommonScaleYears))!=0){
       fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         map<- mapX_rasterKMeans(data=dfx,scaleData=dfgridX) + m8 +tm_legend(title=moduleUnits)+
@@ -832,9 +852,9 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
                        dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }
-    }
+    }}
 
-    
+    }# Close if !type in moduleRemove
     #____________________
     # By ADMIN Region
     #____________________
@@ -847,8 +867,8 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
 write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",moduleParam,"_",type,"_ByAdminRegion_",min(rangeX),"to",max(rangeX),".csv",sep=""),row.names=F)
     }
     
-    dfCommonScaleYears<<-dxpbyAdmin%>%dplyr::select(-c(NAME_1))
-    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    dfCommonScaleYears<<-dxpbyAdmin%>%dplyr::select(-c(NAME_1));max(dfCommonScaleYears)
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}
     
     shpa.x<-shpa1
     shpa.x@data<-join(shpa.x@data,dxpbyAdmin,by=c("NAME_1")) %>% 
@@ -878,7 +898,7 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }
     
     # KMEANS 
-    
+    if(sd(as.matrix(dfCommonScaleYears))!=0){
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
     map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
@@ -899,7 +919,10 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
     }
     }
+    }
     
+    
+    if(!(type %in% moduleRemove)){
     
    #1Scale Across Types
     
@@ -924,6 +947,7 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }}
       
+      if(sd(as.matrix(dfCommonScaleYears))!=0){
       fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
@@ -941,9 +965,9 @@ write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
           print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
                        dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-      }}
+      }}}
     
-    
+    } #Close if !type in moduleRemove
     
     #____________________
     # By BASIN Region
@@ -958,7 +982,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }
     
     dfCommonScaleYears<<-dxpbyBasin%>%dplyr::select(-c(basin_name))
-    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+    if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}
     
     shpa.x<-shpbasin1
     shpa.x@data<-join(shpa.x@data,dxpbyBasin,by=c("basin_name")) %>% 
@@ -987,6 +1011,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     }}
     
     #KMEANS
+    if(sd(as.matrix(dfCommonScaleYears))!=0){
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
     map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
@@ -998,12 +1023,17 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
     if(animationsOn==1){
       fname<-paste(dir,"/anim_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE.gif",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
+                        filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
         animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
                         filename=fname,width=NA,height=NA,delay=delay)
         print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
                      dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-    }}
+    }}}
+    
+    
+    if(!(type %in% moduleRemove)){
     # 1 scales for all non-agricultural demands
     
     dfgridX<-df1ScaleBasin
@@ -1018,6 +1048,8 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
       if(animationsOn==1){
         fname<-paste(dir,"/anim_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems.gif",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+          animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
+                          filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
           animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
                           filename=fname,width=NA,height=NA,delay=delay)
           print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
@@ -1025,6 +1057,7 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }}
       
+      if(sd(as.matrix(dfCommonScaleYears))!=0){
       fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
@@ -1043,8 +1076,8 @@ write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_",module
                        dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }
-    }
-    
+    }}
+    } # Close ! type in moduleRemove
     
     if(bySubBasin==1){
       #____________________
@@ -1060,7 +1093,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       }
       
       dfCommonScaleYears<<-dxpbysubBasin%>%dplyr::select(-c(subBasin_name))
-      if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<-1}
+      if(moduleName=="scarcity"){dfCommonScaleYears[dfCommonScaleYears > 1]<<-1}
       
       shpa.x<-shpsubBasin1
       shpa.x@data<-join(shpa.x@data,dxpbysubBasin,by=c("subBasin_name")) %>% 
@@ -1091,6 +1124,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
       }
       
       #KMEANS
+      if(sd(as.matrix(dfCommonScaleYears))!=0){
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
@@ -1110,7 +1144,9 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
                        dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       }
-      }
+      }}
+      
+      if(!(type %in% moduleRemove)){
       # Common scales for all non-agricultural demands
       
       dfgridX<-df1ScalesubBasin
@@ -1134,6 +1170,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
         }}
         
+        if(sd(as.matrix(dfCommonScaleYears))!=0){
         fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
         map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
@@ -1152,19 +1189,794 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
                          dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
         }
-        }
+        }}
+      } # Close if ! type in moduleRemove
+        
       }# Close bySubBasin
+    } # Close if empty because Type is 0
   } # Close Type
 } # Close Mapping Function
+
+
+
+
+#________________________________________________________________________________
+#--------------------------------------------------------------------------------
+# Base Maps
+#--------------------------------------------------------------------------------
+#________________________________________________________________________________
+
+
+#--- Choose base boundary files (Province, country, basins)
+
+shp0<<-shp_wdspne10mAdmin0
+shp<<-shp_gadm36L1    # GCAM Regions  !!!! FOR URUGUAY NO GCAM REGION SHAPEFILE
+names(shp@data)[names(shp@data)=="NAME_0"]<-"GCAM_region"
+shp1<<-shp_gadm36L1  # GADM Provinces
+shp_basins<<-shp_PNNL235CLM5ArcMin_multi  # GCAm Basins
+#shp_subBasins<<-shp_HydroBasinsLev3  # SubBasin Map
+
+if(region_i=="Colombia"){
+  shp_subBasins<<-shp_SIACHydroZones  # SubBasin Map
+  shp_subBasins@data$subBasin_name<-shp_subBasins@data$NOM_ZH  # Rename the Subbasin File
+}else{
+  shp_subBasins<<-shp_HydroBasinsLev4  # SubBasin Map
+  shp_subBasins@data$subBasin_name<-shp_subBasins@data$HYBAS_ID  # Rename the Subbasin File
+}
+
+# Regional Selected Region
+shp0a<<-shp0[which(shp0$ADMIN==region_i),]
+shp0a@data<-droplevels(shp0a@data)
+shp0a<<-shp0a
+plot(shp0a)
+
+# Regional Selected Region
+shpa<<-shp[which(shp$GCAM_region==region_i),]
+if(region_i=="Argentina"){  # FOR ARGENTINA MERGE Ciudad de Buenos Aires into Buenos Aires
+  shpa@data$NAME_1[which(shpa@data$NAME_1=="Ciudad de Buenos Aires")]<-"Buenos Aires"
+  shpa<-aggregate(shpa, by= "NAME_1")
+}
+shpa@data<-droplevels(shpa@data)
+shpa<<-shpa
+plot(shpa)
+
+# GCAM Regional Bounding Box
+b1<<-as.data.frame(bbox(shp[which(shp$GCAM_region==region_i),]))   # Get Bounding box
+expandbyPercent<<-2; b1$min;b1$max
+b1$min[1]<-if(b1$min[1]<0){(1+expandbyPercent/100)*b1$min[1]}else{(1-expandbyPercent/100)*b1$min[1]};
+b1$min[2]<-if(b1$min[2]<0){(1+expandbyPercent/100)*b1$min[2]}else{(1-expandbyPercent/100)*b1$min[2]};
+b1$max[1]<-if(b1$max[1]<0){(1-expandbyPercent/100)*b1$max[1]}else{(1+expandbyPercent/100)*b1$max[1]};
+b1$max[2]<-if(b1$max[2]<0){(1-expandbyPercent/100)*b1$max[2]}else{(1+expandbyPercent/100)*b1$max[2]};
+b1$min;b1$max;
+b1<<-as(extent(as.vector(t(b1))), "SpatialPolygons")
+proj4string(b1)<-CRS(projX) # ASSIGN COORDINATE SYSTEM
+b1<<-b1
+
+# Simple Boundary
+shp0b<<-raster::crop(shp0,b1)
+shp0b@data<-droplevels(shp0b@data)
+shp0b<<-shp0b
+plot(shp0b)
+
+shpb<<-raster::crop(shp,b1)
+shpb@data<-droplevels(shpb@data)
+shpb<<-shpb
+plot(shpb)
+
+# GADM Boundaries Selected Region
+shpa1<<-shp1[which(shp1$NAME_0==region_i),]
+if(region_i=="Argentina"){  # FOR ARGENTINA MERGE Ciudad de Buenos Aires into Buenos Aires
+  shpa1@data$NAME_1[which(shpa1@data$NAME_1=="Ciudad de Buenos Aires")]<-"Buenos Aires"
+  shpa1<-aggregate(shpa1, by= "NAME_1")
+}
+shpa1@data<-droplevels(shpa1@data)
+shpa1<<-shpa1
+plot(shpa1)
+
+# GADM Boundaries Bounding Box
+shpb1<-raster::crop(shp1,b1)
+shpb1@data<-droplevels(shpb1@data)
+shpb1<<-shpb1
+plot(shpb1)
+
+# GCAM Basins Boundaries Bounding Box
+shpbasin<-raster::crop(shp_basins,b1)
+shpbasin@data<-droplevels(shpbasin@data)
+plot(shpbasin)
+shpbasin<<-shpbasin
+dev.off()
+
+# GCAM Basins Boundaries For Analysis
+shpbasin1<-raster::crop(shp_basins,shpa)
+shpbasin1@data<-droplevels(shpbasin1@data)
+plot(shpbasin1)
+shpbasin1<<-shpbasin1
+dev.off()
+
+if(bySubBasin==1){
+  # subBasins Boundaries Bounding Box
+  shpsubBasin<<-raster::crop(shp_subBasins,b1)
+  shpsubBasin@data<-droplevels(shpsubBasin@data)
+  plot(shpsubBasin)
+  shpsubBasin<<-shpsubBasin
+  dev.off()
+  
+  # subBasins Boundaries For Analysis
+  shpsubBasin1<-raster::crop(shp_subBasins,shpa)
+  shpsubBasin1@data<-droplevels(shpsubBasin1@data)
+  plot(shpsubBasin1)
+  shpsubBasin1<<-shpsubBasin1
+  dev.off()
+  
+  # Dissolve subbasins
+  shpsubBasin<-aggregate(shpsubBasin, by= "subBasin_name")
+  shpsubBasin<<-shpsubBasin
+  plot(shpsubBasin)
+  shpsubBasin1<-aggregate(shpsubBasin1, by= "subBasin_name")
+  shpsubBasin1<<-shpsubBasin1
+  plot(shpsubBasin1)
+}
+
+#______________________
+# Merging a shapefile up
+# dissolving by country or subbasin
+#______________________
+
+# Country Selected Region
+shpa1x<-shp0a
+plot(shpa1x)
+
+# Bounding Box
+shpb1x<-shp0b
+plot(shpb1x)
+
+# Bounding Box without chosen region
+shpc1x<-gDifference(shpb1x, shpa1x)
+shpc1x<<-shpc1x
+plot(shpc1x,col="gray80",border="black")
+
+
+#---------------------
+# Base maps - Admin Boundaries Used 
+#---------------------
+
+if(!dir.exists(paste(wdfigsOut,"/",region_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,sep=""))}
+if(!dir.exists(paste(wdfigsOut,"/",region_i,"/Basemaps",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/Basemaps",sep=""))}
+dir<-paste(wdfigsOut,"/",region_i,"/Basemaps",sep="")
+
+#-----------------------  Admin Boundaries with Labels
+
+
+m1<<- tm_shape(shpb1x) + 
+  tm_borders("grey",lwd=0.5, lty=1) +
+  tm_shape(shpa1) + 
+  tm_fill("NAME_1", style="pretty",palette="Set3",legend.show=F) +
+  #tm_legend(outside = TRUE, text.size = 1) +
+  tm_borders("grey") +
+  tm_text("NAME_1",scale=0.7,auto.placement=F, col="black") +
+  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
+  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+if(titleOn==1){m1<<-m1 + tm_layout(main.title=paste(region_i," State Map",sep=""))}
+m1
+
+fname<<-paste("map_basemaps_m1_",region_i,"_provincialLabelled",sep="")
+print_PDFPNG(m1,dir=dir,filename=fname,figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
+selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+
+
+#-----------------------  Basin Boundaries with Labels
+
+m2<<- tm_shape(shpb1) + 
+  tm_borders("grey",lwd=0.5, lty=1) +
+  tm_shape(shpbasin) + 
+  tm_fill("basin_name", style="pretty",palette="Set3",legend.show=F)  +
+  tm_borders("grey") +
+  tm_text("basin_name",scale=0.7,auto.placement=F, col="black") +tm_shape(shpa) + 
+  tm_borders("black",lwd=2, lty=1) +
+  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_add_legend(title = paste("JGCRI Basins",sep=""),type = c("fill"), col = "lightcoral",border.col="grey",lwd = 1, lty = 1) +
+  tm_legend(outside = TRUE, text.size = 1) +
+  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
+  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+if(titleOn==1){m2<<-m2 + tm_layout(main.title=paste(region_i," Basin Map",sep=""))}
+m2
+
+fname<<-paste("map_basemaps_m2_",region_i,"_basinsLabelled",sep="")
+print_PDFPNG(m2,dir=dir,filename=fname,figWidth_InchMaster*0.7,figHeight_InchMaster*1,pdfpng=pdfpng)
+selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+
+
+#-----------------------  Cropped Basin Boundaries with Labels
+
+m3<<- tm_shape(shpb1x) +# tm_text("NAME_0",scale=0.6,auto.placement=T, col="grey") +
+  tm_borders("grey",lwd=0.5, lty=1) +
+  tm_shape(shpbasin1) + 
+  tm_fill("basin_name", style="pretty",palette="Set3",legend.show=F,title = "JGCRI Basin")  +
+  tm_borders("grey") +
+  tm_text("basin_name",scale=0.7,auto.placement=F, col="black") +
+  #tm_shape(shpa) + tm_borders("black",lwd=2, lty=1) +
+  #tm_add_legend(title = paste("JGCRI Region ",region,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
+  #tm_legend(outside = TRUE, title.size = 1) +
+  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
+  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+if(titleOn==1){m3<<-m3 + tm_layout(main.title=paste(region_i," Basin Map",sep=""))}
+m3
+fname<<-paste("map_basemaps_m3_",region_i,"_basinsLabelledCropped",sep="")
+print_PDFPNG(m3,dir=dir,filename=fname,figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
+selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+
+
+if(bySubBasin==1){
+  
+  
+  m2sub<<- tm_shape(shpb1x) + 
+    tm_borders("grey",lwd=0.5, lty=1) +
+    tm_shape(shpsubBasin1) + 
+    tm_fill("subBasin_name", style="pretty",palette="Set3",legend.show=F)  +
+    tm_borders("grey") +
+    #tm_add_legend(title = paste("JGCRI Region ",region,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
+    #tm_legend(outside = TRUE, title.size = 1) +
+    #tm_add_legend(title = paste("JGCRI subBasins",sep=""),type = c("fill"), col = "lightcoral",border.col="grey",lwd = 1, lty = 1) +
+    #tm_legend(outside = TRUE, text.size = 1) +
+    tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+    tm_scale_bar(position=c("right", "bottom"),width=0.2)+
+    tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+  if(titleOn==1){m2<<-m2 + tm_layout(main.title=paste(region_i," subBasin Map",sep=""))}
+  m2sub
+  
+  print_PDFPNG(m2sub,dir=dir,filename=paste("map_basemaps_m2sub_",region_i,"_subBasinsLabelled",sep=""),figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
+  
+  
+  
+  m3sub<<- tm_shape(shpb1x) +# tm_text("NAME_0",scale=0.6,auto.placement=T, col="grey") +
+    tm_borders("grey",lwd=0.5, lty=1) +
+    tm_shape(shpsubBasin1) + 
+    tm_fill("subBasin_name", style="pretty",palette="Set3",legend.show=T,title = "Sub-Basin")  +
+    tm_borders("grey") +
+    #tm_text("subBasin_name",scale=1,auto.placement=F, col="black") +
+    #tm_shape(shpa) + tm_borders("black",lwd=2, lty=1) +
+    #tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
+    #tm_legend(outside = TRUE, title.size = 1) +
+    tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+    tm_scale_bar(position=c("right", "bottom"),width=0.2)+
+    tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+  if(titleOn==1){m3<<-m3 + tm_layout(main.title=paste(region_i," subBasin Map",sep=""))}
+  m3sub
+  
+  print_PDFPNG(m3sub,dir=dir,filename=paste("map_basemaps_m3sub_",region_i,"_subBasinsLabelledCropped",sep=""),figWidth_InchMaster*0.5,figHeight_InchMaster*0.75,pdfpng=pdfpng)
+  
+  m4sub<<- tm_shape(shpb1) + tm_borders("white",lwd=0.5, lty=1) +
+    tm_shape(shpa1) + tm_borders("grey",lwd=0.5, lty=1) +
+    tm_add_legend(title = "State borders",type = c("line"), col = "grey", lwd = 0.5, lty = 1) +
+    tm_legend(outside = TRUE, title.size = 1) +
+    tm_shape(shpa) + 
+    tm_borders("blue",lwd=2.5, lty=1) +
+    tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "blue", lwd = 2.5, lty = 1) +
+    tm_legend(outside = TRUE, title.size = 1) +
+    tm_shape(shpsubBasin1) + 
+    tm_borders("red", lwd=1.5, lty=1) +
+    tm_add_legend(title = paste("subBasin boundaries ",region_i,sep=""),type = c("line"), col = "red", lwd = 1.5, lty = 1) +
+    tm_legend(outside = TRUE, title.size = 1) +
+    tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+    tm_scale_bar(position=c("right", "bottom"),width=0.2) +
+    tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+  if(titleOn==1){m4<<-m4 + tm_layout(main.title=paste(region_i," Boundary Overlap",sep=""))}
+  m4sub
+  
+  print_PDFPNG(m4sub,dir=dir,filename=paste("map_basemaps_m4sub_",region_i,"_regionProvincesubBasinsOutlines",sep=""),figWidth_InchMaster*1,figHeight_InchMaster*0.7,pdfpng=pdfpng)
+  
+}
+
+#----------------------- Overlap of region, provinces and basins
+
+m4<<- tm_shape(shpb1) + tm_borders("white",lwd=0.5, lty=1) +
+  tm_shape(shpa1) + tm_borders("grey",lwd=0.5, lty=1) +
+  tm_add_legend(title = "State borders",type = c("line"), col = "grey", lwd = 0.5, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_shape(shpa) + 
+  tm_borders("blue",lwd=2.5, lty=1) +
+  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "blue", lwd = 2.5, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_shape(shpbasin1) + 
+  tm_borders("red", lwd=1.5, lty=1) +
+  tm_add_legend(title = paste("Basin boundaries ",region_i,sep=""),type = c("line"), col = "red", lwd = 1.5, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  tm_scale_bar(position=c("right", "bottom"),width=0.2) +
+  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+if(titleOn==1){m4<<-m4 + tm_layout(main.title=paste(region_i," Boundary Overlap",sep=""))}
+m4
+
+print_PDFPNG(m4,dir=dir,filename=paste("map_basemaps_m4_",region_i,"_regionProvinceBasinsOutlines",sep=""),figWidth_InchMaster*0.5,figHeight_InchMaster*.75,pdfpng=pdfpng)
+
+
+
+#----------------------- Regional Map showing Countries
+
+m5<<- tm_shape(shpb1x) + 
+  tm_fill("ADMIN", alpha=0.9,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F) +
+  tm_shape(shpb1) + 
+  tm_borders(col="grey",lwd=1,lty=1) +
+  tm_shape(shpb1x) + tm_text("ADMIN",scale=1,auto.placement=T, col="black") +
+  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
+  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+if(titleOn==1){m5<<-m5 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
+m5
+fname<<-paste("map_basemaps_m5_",region_i,"_regionalMap",sep="")
+print_PDFPNG(m5,dir=dir,filename=fname,figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
+selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+
+#----------------------- Regional Map with Mapping Boundaries
+
+m6<<- tm_shape(shpb1x) + 
+  tm_fill("ADMIN", alpha=0.9,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F) +
+  tm_shape(shpb1x) + 
+  tm_borders(col="grey",lwd=0.5,lty=1) +
+  tm_shape(shpa1) + tm_borders("grey",lwd=0.5, lty=1) +
+  tm_add_legend(title = "State borders",type = c("line"), col = "grey", lwd = 0.5, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_shape(shpa) + 
+  tm_borders("blue",lwd=2.5, lty=1) +
+  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "blue", lwd = 2.5, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_shape(shpbasin1) + 
+  tm_borders("red", lwd=1.5, lty=1) +
+  tm_add_legend(title = paste("Basin boundaries ",region_i,sep=""),type = c("line"), col = "red", lwd = 1.5, lty = 1) +
+  tm_legend(outside = TRUE, title.size = 1) +
+  tm_shape(shpb1x) + tm_text("ADMIN",scale=1,auto.placement=T, col="black") +
+  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  tm_scale_bar(position=c("right", "bottom"),width=0.2) +
+  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
+if(titleOn==1){m6<<-m6 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
+m6
+
+fname<<-paste("map_basemaps_m6_",region_i,"_regionalMapBasinsProvinces",sep="")
+print_PDFPNG(m6,dir=dir,filename=fname,figWidth_InchMaster*0.6,figHeight_InchMaster*0.75,pdfpng=pdfpng)
+selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+
+
+#-----------------------  Surrounding Regions and Ocean for Plotting with Analysis Layers
+
+
+
+m7<<- tm_shape(shpc1x) + 
+  tm_fill("gray90",alpha=0.8,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F)  +
+  tm_shape(shpb1x) + tm_text("ADMIN",scale=0.6,auto.placement=F,col="grey") + tm_borders("black",lwd=1,lty=1) +
+  #tm_shape(shpa1x) + 
+  #tm_fill("white",alpha=0.5,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F)  +
+  tm_borders("black",lwd=1,lty=1) +
+  #tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  #tm_scale_bar(position=c("right", "bottom"),width=0.2) +
+  tm_layout(frame = TRUE, bg.color="lightcyan") + tm_layout_z
+if(titleOn==1){m7<<-m7 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
+m7
+
+
+print_PDFPNG(m7,dir=dir,filename=paste("map_basemaps_m7_",region_i,"_regionForAnalysis",sep=""),
+             figWidth_InchMaster*0.5,figHeight_InchMaster*0.75,pdfpng=pdfpng)
+
+
+m8<<-tm_shape(shpb1x) + tm_text("ADMIN",scale=0.6,auto.placement=F,col="grey") + tm_borders("black",lwd=1,lty=1) +
+  tm_borders("black",lwd=1,lty=1) +
+  #tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
+  #tm_scale_bar(position=c("right", "bottom"),width=0.2) + tm_layout_z
+  if(titleOn==1){m7<<-m7 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
+m8
+
+print_PDFPNG(m8,dir=dir,filename=paste("map_basemaps_m8_",region_i,"_regionForAnalysisBlank",sep=""),
+             figWidth_InchMaster*0.5,figHeight_InchMaster*0.75,pdfpng=pdfpng)
+
+
+
+#____________________________________________
+# Prepare Data From GCAM DataBase
+#____________________________________________
+
+#----------
+# Line Charts (df_line)
+#-----------
+
+df_line<-data.frame()
+
+tbl <- getQuery(queryData.proj, "GDP per capita MER by region") # Tibble  # MER is Market Exchange rate
+df<-as.data.frame(tbl);              # Data frame
+df$param<-"gdpPerCapita"; head(df)
+df$Query<-"GDP per capita MER by region"
+df$NewValue<-df$value
+df$NewUnits<-"GDP~per~Capita~(Thousand~1990~USD~per~Person)"  # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df_line<-rbind.data.frame(df_line,df); head(df_line)
+
+tbl <- getQuery(queryData.proj, "GDP MER by region") # Tibble
+df<-as.data.frame(tbl);              # Data frame
+df$param<-"gdp"; head(df) 
+df$Query<-"GDP MER by region"
+df$NewValue<-df$value/1000
+df$NewUnits<-"GDP~(Billion~1990~USD)" # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df_line<-rbind.data.frame(df_line,df); head(df_line)
+
+tbl <- getQuery(queryData.proj, "Population by region") # Tibble
+df<-as.data.frame(tbl);              # Data frame
+df$param<-"pop"; head(df) 
+df$Query<-"Population by region" 
+df$NewValue<- df$value/1000
+df$NewUnits<-"Population~(Millions)" # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df_line<-rbind.data.frame(df_line,df); head(df_line)
+
+#----------
+# Bar Charts (df_bar)
+#-----------
+
+df_bar<-data.frame()
+
+
+tbl <- getQuery(queryData.proj, "Total final energy by aggregate end-use sector") # Tibble
+df<-as.data.frame(tbl);head(df)                 # Data frame
+totFinalNrgByEndUse<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="totFinalNrgByEndUse",
+                                    NewValue=value,
+                                    NewUnits="Final~Energy~by~End-Use~Sector~(EJ)", # Use ~ for spaces. Will be parsed later
+                                    Fill=sector,
+                                    FillLabel="Sector",
+                                    FillPalette="enduse_colors") %>%
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,totFinalNrgByEndUse); head(df_bar)
+
+tbl <- getQuery(queryData.proj, "primary energy consumption by region (direct equivalent)") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+primNrgConsumByFuel<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="primNrgConsumByFuel",
+                                    NewValue=value,
+                                    NewUnits="Primary~Energy~Consumption~(EJ)", # Use ~ for spaces. Will be parsed later
+                                    Fill=fuel,
+                                    FillLabel="Fuel",
+                                    FillPalette="colorsX_PAL_pri_ene")%>%
+  subset(.,select=-c(fuel));
+df_bar<-rbind.data.frame(df_bar,primNrgConsumByFuel); head(df_bar)
+
+tbl <- getQuery(queryData.proj, "Electricity generation by aggregate technology") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+elecByTech<-df %>% mutate (x=year,
+                           xLabel="Year",
+                           param="elecByTech",
+                           NewValue=value,
+                           NewUnits="Electricity~Generation~(EJ)", # Use ~ for spaces. Will be parsed later
+                           Fill=technology,
+                           FillLabel="Technology",
+                           FillPalette="colorsX_elec_tech_colors") %>%
+  subset(.,select=-c(technology));
+df_bar<-rbind.data.frame(df_bar,elecByTech); head(df_bar)
+
+tbl <- getQuery(queryData.proj, "water consumption by sector") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+watConsumBySec<-df %>% mutate (x=year,
+                               xLabel="Year",
+                               param="watConsumBySec",
+                               NewValue=value,
+                               NewUnits="Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
+                               Fill=sector,
+                               FillLabel="Sector",
+                               FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,watConsumBySec); head(df_bar)
+unique(watConsumBySec$Fill)
+
+tbl <- getQuery(queryData.proj, "water withdrawals by sector") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+watWithdrawBySec<-df %>% mutate (x=year,
+                                 xLabel="Year",
+                                 param="watWithdrawBySec",
+                                 NewValue=value,
+                                 NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
+                                 Fill=sector,
+                                 FillLabel="Sector",
+                                 FillPalette="colorsX_Unassigned") %>% 
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,watWithdrawBySec); head(df_bar)
+unique(watWithdrawBySec$Fill)
+
+tbl <- getQuery(queryData.proj, "water withdrawals by crop") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+df<-df[df$sector!="industry" & df$sector!="mining" & df$sector!="municipal" 
+       & df$sector!="electricity" & df$sector!="livestock",]
+watWithdrawByCrop<-df %>% mutate (x=year,
+                                  xLabel="Year",
+                                  param="watWithdrawByCrop",
+                                  NewValue=value,
+                                  NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
+                                  Fill=sector,
+                                  FillLabel="Crop",
+                                  FillPalette="colorsX_Unassigned") %>% 
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,watWithdrawByCrop); head(df_bar)
+unique(watWithdrawByCrop$Fill)
+
+tbl <- getQuery(queryData.proj, "Ag Production by Crop Type") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+df<-df[df$sector==df$output,]  # So that biomass is not double counted
+agProdByCropBiomass <- df %>% filter(Units=="EJ") %>% 
+  mutate (x=year,
+          xLabel="Year",
+          param="agProdByCropBiomass",
+          NewValue=value,
+          NewUnits="Agricultural~Production~Biomass~(EJ)", # Use ~ for spaces. Will be parsed later
+          Fill=output,
+          FillLabel="Outputs",
+          FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(output,sector));
+df_bar<-rbind.data.frame(df_bar,agProdByCropBiomass); head(df_bar)
+unique(agProdByCropBiomass$Fill)
+
+agProdByForest <- df %>% filter(Units=="billion m3") %>% 
+  mutate (x=year,
+          xLabel="Year",
+          param="agProdByCropForest",
+          NewValue=value,
+          NewUnits="Agricultural~Production~Forest~(billion~m^3)", # Use ~ for spaces. Will be parsed later
+          Fill=output,
+          FillLabel="Outputs",
+          FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(output,sector));
+df_bar<-rbind.data.frame(df_bar,agProdByForest); head(df_bar)
+unique(agProdByForest$Fill)
+
+agProdByCrop <- df %>% filter(Units=="Mt") %>% 
+  mutate (x=year,
+          xLabel="Year",
+          param="agProdByCrop",
+          NewValue=value,
+          NewUnits="Agricultural~Production~Crop~(Mt)", # Use ~ for spaces. Will be parsed later
+          Fill=output,
+          FillLabel="Outputs",
+          FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(output,sector));
+df_bar<-rbind.data.frame(df_bar,agProdByCrop); head(df_bar)
+unique(agProdByCrop$Fill)
+
+
+tbl <- getQuery(queryData.proj, "water withdrawals by water mapping source") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
+df$input<-gsub("water_td_irr_","",df$input);
+df$input<-gsub("_W","",df$input);head(df)
+wwIrrBasin<-df %>% mutate (x=year,
+                           xLabel="Year",
+                           param="irrWatWithBasin",
+                           NewValue=value,
+                           NewUnits="Irrigation~Water~Withdrawal~(km^3)", # Use ~ for spaces. Will be parsed later
+                           Fill=input,
+                           FillLabel="Basin",
+                           FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(input));
+df_bar<-rbind.data.frame(df_bar,wwIrrBasin); head(df_bar)
+unique(wwIrrBasin$Fill)
+
+
+tbl <- getQuery(queryData.proj, "water consumption by water mapping source") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
+df$input<-gsub("water_td_irr_","",df$input);
+df$input<-gsub("_C","",df$input);head(df)
+wcIrrBasin<-df %>% mutate (x=year,
+                           xLabel="Year",
+                           param="irrWatConsBasin",
+                           NewValue=value,
+                           NewUnits="Irrigation~Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
+                           Fill=input,
+                           FillLabel="Basin",
+                           FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(input));
+df_bar<-rbind.data.frame(df_bar,wcIrrBasin); head(df_bar)
+unique(wcIrrBasin$Fill)
+
+tbl <- getQuery(queryData.proj, "aggregated land allocation") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+landAll<-df %>% mutate (x=year,
+                        xLabel="Year",
+                        param="aggLandAlloc",
+                        NewValue=value,
+                        NewUnits="Land~Allocation~(km^2)", # Use ~ for spaces. Will be parsed later
+                        Fill=landleaf,
+                        FillLabel="Type",
+                        FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(landleaf));
+df_bar<-rbind.data.frame(df_bar,landAll); head(df_bar)
+unique(landAll$Fill)
+
+#------------------
+# Limit to selected analysis range
+df_line<-df_line[df_line$x<=max(range(rangeX)),]
+df_bar<-df_bar[df_bar$x<=max(range(rangeX)),]
+
+df_line<-df_line%>%filter(region==region_i)
+df_bar<-df_bar%>%filter(region==region_i)
+
+# Automatic Selection of all parameters
+unique(df_line$param);unique(df_bar$param) # List of all params
+params<-c(unique(df_line$param),unique(df_bar$param))  # For all Parameters
+
+
+# Rename scenarios with new names
+df_line$scenario<-df_line$scenario%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+#df_line$segment<-df_line$segment%>%gsub(" electricity","",.)
+scenariosComp<<-scenariosComp%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+scenariosIndv<<-scenariosIndv%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+head(df_line)
+df_line$scenario<-as.factor(df_line$scenario)
+df_line$scenario <- factor( as.character(df_line$scenario), levels=c(scenariosComp) );
+df_line<-df_line[order(df_line$scenario),];
+df_lineOrig<-df_line
+
+# Rename scenarios with new names
+df_bar$scenario<-df_bar$scenario%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+#df_bar$segment<-df_bar$segment%>%gsub(" electricity","",.)
+scenariosComp<<-scenariosComp%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+scenariosIndv<<-scenariosIndv%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+head(df_bar)
+df_bar$scenario<-as.factor(df_bar$scenario)
+df_bar$scenario <- factor( as.character(df_bar$scenario), levels=c(scenariosComp) );
+df_bar<-df_bar[order(df_bar$scenario),];
+df_barOrig<-df_bar
+
+rm(lty3,ltz1,ltz,lty2,lty1,
+   df_line_elecCap,df_line_elecCapInvestCum,df_line_elecCapRetireCum,
+   df_line_elecCapRetire,ltz2,ncx,df_line_elecGenbyVerSeg,
+   jx,dfx,jy,df,
+   #df_line_elecCapCum,df_line_elecProd,df_line_elecCapFac,
+   df_line_capFacbyHorSeg); gc()
+
+
+#----------------
+
+# Create Folders
+if(!dir.exists(paste(wdfigsOut,"/",region_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,sep=""))}
+
+
+if(runDiffPlots==1){
+
+#______________________
+# Diff Plots and Comparisons
+#______________________
+
+#region_i<-regions[1];region_i;scenario_i<-scenariosIndv[1];scenario_i;   #For testing purposes
+
+if(!dir.exists(paste(wdfigsOut,"/",region_i,"/DiffPlots",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/DiffPlots",sep=""))}
+dir<-paste(wdfigsOut,"/",region_i,"/DiffPlots",sep="")
+
+
+  for(param in params){
+    
+    
+    df_line<-df_lineOrig
+    df_bar<-df_barOrig
+    #----------
+    # Line Charts
+    #-----------    
+    
+    l1<-df_line[(df_line$param==param & df_line$region==region_i),]; head(l1)
+    
+    if(nrow(l1)!=0){
+      
+      fname<-paste("lineComp_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        p <- fig_LineCompareScenario(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)}  
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*0.7,figHeight_InchMaster,pdfpng=pdfpng)
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue));head(t1)
+        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
+        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
+        t1<-t1%>%spread(scenario,NewValue)
+        write.csv(t1,file=paste(dir,"/tableComp_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}  
+    }
+    
+    
+    #----------
+    # Bar Charts
+    #-----------
+    
+    l1<-df_bar[(df_bar$param==param & df_bar$region==region_i),]; head(l1)
+    
+    if(nrow(l1)!=0){
+      
+      l1_sum<-aggregate(NewValue ~ Units+scenario+region+year+param+NewUnits, l1, sum) # To get sums over years
+      
+      fname<-paste("barComp_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
+        p <- p + facet_grid(~scenario)
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
+        
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue,Fill));head(t1)
+        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
+        t1<-dcast(t1,Fill+region+year+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
+        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
+        write.csv(t1,file=paste(dir,"/tableComp_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
+      
+    }
+    
+    
+    
+    #----------
+    # Bar Charts Diff
+    #-----------
+    
+    l1<-df_bar[(df_bar$param==param & df_bar$region==region_i),]; head(l1)
+    
+    if(nrow(l1)!=0){
+      
+      lx<-l1%>%dplyr::select(-c(Units,value))%>%spread(scenario,NewValue)%>%replace(is.na(.), 0)%>%
+        mutate(!!paste(scenName1,"_diff",sep=""):=get(scenName1)-get(scenNameRef))%>%dplyr::select(-c(scenName1))
+      if(length(scenariosComp)>2){lx<-lx%>%
+        mutate(!!paste(scenName2,"_diff",sep=""):=get(scenName2)-get(scenNameRef))%>%dplyr::select(-c(scenName2))}
+      if(length(scenariosComp)>3){lx<-lx%>%
+        mutate(!!paste(scenName3,"_diff",sep=""):=get(scenName3)-get(scenNameRef))%>%dplyr::select(-c(scenName3))}
+      lx<-lx%>%gather(key=scenario,value=NewValue,-param,-region,-year,
+               -x,-xLabel,-NewUnits,-Fill,-FillLabel,-FillPalette);head(lx)
+      
+      lx$scenario<-lx$scenario%>%gsub("_diff","",.);head(lx)
+      lx<-lx%>%filter(scenario != scenNameRef);lx<-droplevels(lx)
+      
+      lx$scenario<-as.factor(lx$scenario)
+      lx$scenario <- factor( as.character(lx$scenario), levels=c(scenariosComp) );
+      lx<-lx[order(lx$scenario),];
+      
+      l1<-lx
+      
+      fname<-paste("barDiff_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
+        p <- p+ facet_grid(~scenario)
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
+        
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue,Fill));head(t1)
+        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
+        t1<-dcast(t1,Fill+region+year+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
+        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
+        write.csv(t1,file=paste(dir,"/tableDiff_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+      
+      }
+    }
+      
+  } # Close Params
+ 
+}# Close if Run DiffPlots
+
 
 #______________________
 # Start Regional and Scenario Loops
 #______________________
 
-#region_i<-regions[1];region_i;scenario_i<-scenarios[1];scenario_i;   #For testing purposes
+#region_i<-regions[1];region_i;scenario_i<-scenariosIndv[1];scenario_i;   #For testing purposes
 
-for(scenario_i in scenarios){
-    
+for(scenario_i in scenariosIndv){
+  
+  df_line<-df_lineOrig
+  df_bar<-df_barOrig
+  df_line<-df_line%>%filter(scenario==scenario_i)
+  df_bar<-df_bar%>%filter(scenario==scenario_i)
     
 # Create Folders
 if(!dir.exists(paste(wdfigsOut,"/",region_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,sep=""))}
@@ -1183,238 +1995,7 @@ dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,sep="")
     
     if(runGCAMCharts==1){
       
-      #____________________________________________
-      # Prepare Data From GCAM DataBase
-      #____________________________________________
-      
-      #----------
-      # Line Charts (df_line)
-      #-----------
-      
-      df_line<-data.frame()
-      
-      tbl <- getQuery(queryData.proj, "GDP per capita MER by region") # Tibble  # MER is Market Exchange rate
-      df<-as.data.frame(tbl);              # Data frame
-      df$param<-"gdpPerCapita"; head(df)
-      df$Query<-"GDP per capita MER by region"
-      df$NewValue<-df$value
-      df$NewUnits<-"GDP~per~Capita~(Thousand~1990~USD~per~Person)"  # Use ~ for spaces. Will be parsed later
-      df$x<-df$year
-      df$xLabel<-"Year"
-      df_line<-rbind.data.frame(df_line,df); head(df_line)
-      
-      tbl <- getQuery(queryData.proj, "GDP MER by region") # Tibble
-      df<-as.data.frame(tbl);              # Data frame
-      df$param<-"gdp"; head(df) 
-      df$Query<-"GDP MER by region"
-      df$NewValue<-df$value/1000
-      df$NewUnits<-"GDP~(Billion~1990~USD)" # Use ~ for spaces. Will be parsed later
-      df$x<-df$year
-      df$xLabel<-"Year"
-      df_line<-rbind.data.frame(df_line,df); head(df_line)
-      
-      tbl <- getQuery(queryData.proj, "Population by region") # Tibble
-      df<-as.data.frame(tbl);              # Data frame
-      df$param<-"pop"; head(df) 
-      df$Query<-"Population by region" 
-      df$NewValue<- df$value/1000
-      df$NewUnits<-"Population~(Millions)" # Use ~ for spaces. Will be parsed later
-      df$x<-df$year
-      df$xLabel<-"Year"
-      df_line<-rbind.data.frame(df_line,df); head(df_line)
-      
-      #----------
-      # Bar Charts (df_bar)
-      #-----------
-      
-      df_bar<-data.frame()
-      
-      
-      tbl <- getQuery(queryData.proj, "Total final energy by aggregate end-use sector") # Tibble
-      df<-as.data.frame(tbl);head(df)                 # Data frame
-      totFinalNrgByEndUse<-df %>% mutate (x=year,
-                                          xLabel="Year",
-                                          param="totFinalNrgByEndUse",
-                                          NewValue=value,
-                                          NewUnits="Final~Energy~by~End-Use~Sector~(EJ)", # Use ~ for spaces. Will be parsed later
-                                          Fill=sector,
-                                          FillLabel="Sector",
-                                          FillPalette="enduse_colors") %>%
-                                          subset(.,select=-c(sector));
-      df_bar<-rbind.data.frame(df_bar,totFinalNrgByEndUse); head(df_bar)
-      
-      tbl <- getQuery(queryData.proj, "primary energy consumption by region (direct equivalent)") # Tibble
-      df<-as.data.frame(tbl);head(df)                # Data frame
-      primNrgConsumByFuel<-df %>% mutate (x=year,
-                                          xLabel="Year",
-                                          param="primNrgConsumByFuel",
-                                          NewValue=value,
-                                          NewUnits="Primary~Energy~Consumption~(EJ)", # Use ~ for spaces. Will be parsed later
-                                          Fill=fuel,
-                                          FillLabel="Fuel",
-                                          FillPalette="colorsX_PAL_pri_ene")%>%
-                                          subset(.,select=-c(fuel));
-      df_bar<-rbind.data.frame(df_bar,primNrgConsumByFuel); head(df_bar)
-      
-      tbl <- getQuery(queryData.proj, "Electricity generation by aggregate technology") # Tibble
-      df<-as.data.frame(tbl);head(df)                # Data frame
-      elecByTech<-df %>% mutate (x=year,
-                                 xLabel="Year",
-                                 param="elecByTech",
-                                 NewValue=value,
-                                 NewUnits="Electricity~Generation~(EJ)", # Use ~ for spaces. Will be parsed later
-                                 Fill=technology,
-                                 FillLabel="Technology",
-                                 FillPalette="colorsX_elec_tech_colors") %>%
-                                 subset(.,select=-c(technology));
-      df_bar<-rbind.data.frame(df_bar,elecByTech); head(df_bar)
-      
-      tbl <- getQuery(queryData.proj, "water consumption by sector") # Tibble
-      df<-as.data.frame(tbl);head(df)                # Data frame
-      watConsumBySec<-df %>% mutate (x=year,
-                                     xLabel="Year",
-                                     param="watConsumBySec",
-                                     NewValue=value,
-                                     NewUnits="Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
-                                     Fill=sector,
-                                     FillLabel="Sector",
-                                     FillPalette="colorsX_Unassigned") %>%
-                                     subset(.,select=-c(sector));
-      df_bar<-rbind.data.frame(df_bar,watConsumBySec); head(df_bar)
-      unique(watConsumBySec$Fill)
-      
-      tbl <- getQuery(queryData.proj, "water withdrawals by sector") # Tibble
-      df<-as.data.frame(tbl);head(df)                # Data frame
-      watWithdrawBySec<-df %>% mutate (x=year,
-                                       xLabel="Year",
-                                       param="watWithdrawBySec",
-                                       NewValue=value,
-                                       NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
-                                       Fill=sector,
-                                       FillLabel="Sector",
-                                       FillPalette="colorsX_Unassigned") %>% 
-                                       subset(.,select=-c(sector));
-      df_bar<-rbind.data.frame(df_bar,watWithdrawBySec); head(df_bar)
-      unique(watWithdrawBySec$Fill)
-      
-      tbl <- getQuery(queryData.proj, "water withdrawals by crop") # Tibble
-      df<-as.data.frame(tbl);head(df)                # Data frame
-      df<-df[df$sector!="industry" & df$sector!="mining" & df$sector!="municipal" 
-             & df$sector!="electricity" & df$sector!="livestock",]
-      watWithdrawByCrop<-df %>% mutate (x=year,
-                                        xLabel="Year",
-                                        param="watWithdrawByCrop",
-                                        NewValue=value,
-                                        NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
-                                        Fill=sector,
-                                        FillLabel="Crop",
-                                        FillPalette="colorsX_Unassigned") %>% 
-                                        subset(.,select=-c(sector));
-      df_bar<-rbind.data.frame(df_bar,watWithdrawByCrop); head(df_bar)
-      unique(watWithdrawByCrop$Fill)
-      
-      tbl <- getQuery(queryData.proj, "Ag Production by Crop Type") # Tibble
-      df<-as.data.frame(tbl);head(df)              # Data frame
-      df<-df[df$sector==df$output,]  # So that biomass is not double counted
-      agProdByCropBiomass <- df %>% filter(Units=="EJ") %>% 
-                                   mutate (x=year,
-                                   xLabel="Year",
-                                   param="agProdByCropBiomass",
-                                   NewValue=value,
-                                   NewUnits="Agricultural~Production~Biomass~(EJ)", # Use ~ for spaces. Will be parsed later
-                                   Fill=output,
-                                   FillLabel="Outputs",
-                                   FillPalette="colorsX_Unassigned") %>%
-                                   subset(.,select=-c(output,sector));
-      df_bar<-rbind.data.frame(df_bar,agProdByCropBiomass); head(df_bar)
-      unique(agProdByCropBiomass$Fill)
-      
-      agProdByForest <- df %>% filter(Units=="billion m3") %>% 
-        mutate (x=year,
-                xLabel="Year",
-                param="agProdByCropForest",
-                NewValue=value,
-                NewUnits="Agricultural~Production~Forest~(billion~m^3)", # Use ~ for spaces. Will be parsed later
-                Fill=output,
-                FillLabel="Outputs",
-                FillPalette="colorsX_Unassigned") %>%
-        subset(.,select=-c(output,sector));
-      df_bar<-rbind.data.frame(df_bar,agProdByForest); head(df_bar)
-      unique(agProdByForest$Fill)
-      
-      agProdByCrop <- df %>% filter(Units=="Mt") %>% 
-        mutate (x=year,
-                xLabel="Year",
-                param="agProdByCrop",
-                NewValue=value,
-                NewUnits="Agricultural~Production~Crop~(Mt)", # Use ~ for spaces. Will be parsed later
-                Fill=output,
-                FillLabel="Outputs",
-                FillPalette="colorsX_Unassigned") %>%
-        subset(.,select=-c(output,sector));
-      df_bar<-rbind.data.frame(df_bar,agProdByCrop); head(df_bar)
-      unique(agProdByCrop$Fill)
-      
-      
-      tbl <- getQuery(queryData.proj, "water withdrawals by water mapping source") # Tibble
-      df<-as.data.frame(tbl);head(df)              # Data frame
-      df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
-      df$input<-gsub("water_td_irr_","",df$input);
-      df$input<-gsub("_W","",df$input);head(df)
-      wwIrrBasin<-df %>% mutate (x=year,
-                                   xLabel="Year",
-                                   param="irrWatWithBasin",
-                                   NewValue=value,
-                                   NewUnits="Irrigation~Water~Withdrawal~(km^3)", # Use ~ for spaces. Will be parsed later
-                                   Fill=input,
-                                   FillLabel="Basin",
-                                   FillPalette="colorsX_Unassigned") %>%
-        subset(.,select=-c(input));
-      df_bar<-rbind.data.frame(df_bar,wwIrrBasin); head(df_bar)
-      unique(wwIrrBasin$Fill)
-      
-      
-      tbl <- getQuery(queryData.proj, "water consumption by water mapping source") # Tibble
-      df<-as.data.frame(tbl);head(df)              # Data frame
-      df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
-      df$input<-gsub("water_td_irr_","",df$input);
-      df$input<-gsub("_C","",df$input);head(df)
-      wcIrrBasin<-df %>% mutate (x=year,
-                                 xLabel="Year",
-                                 param="irrWatConsBasin",
-                                 NewValue=value,
-                                 NewUnits="Irrigation~Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
-                                 Fill=input,
-                                 FillLabel="Basin",
-                                 FillPalette="colorsX_Unassigned") %>%
-        subset(.,select=-c(input));
-      df_bar<-rbind.data.frame(df_bar,wcIrrBasin); head(df_bar)
-      unique(wcIrrBasin$Fill)
-      
-      tbl <- getQuery(queryData.proj, "aggregated land allocation") # Tibble
-      df<-as.data.frame(tbl);head(df)              # Data frame
-      landAll<-df %>% mutate (x=year,
-                              xLabel="Year",
-                              param="aggLandAlloc",
-                              NewValue=value,
-                              NewUnits="Land~Allocation~(km^2)", # Use ~ for spaces. Will be parsed later
-                              Fill=landleaf,
-                              FillLabel="Type",
-                              FillPalette="colorsX_Unassigned") %>%
-        subset(.,select=-c(landleaf));
-      df_bar<-rbind.data.frame(df_bar,landAll); head(df_bar)
-      unique(landAll$Fill)
-    
-      
-      # Limit to selected analysis range
-      df_line<-df_line[df_line$x<=max(range(rangeX)),]
-      df_bar<-df_bar[df_bar$x<=max(range(rangeX)),]
-      
-      # Automatic Selection of all parameters
-      unique(df_line$param);unique(df_bar$param) # List of all params
-      params<-c(unique(df_line$param),unique(df_bar$param))  # For all Parameters
-      
-      
+   
       
       # Create Output Directory
       if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/GCAMCharts",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/GCAMCharts",sep=""))}
@@ -1558,377 +2139,6 @@ if(TRUE) {
 }
     } # Close GCAM if GCAM runs
 
-  
-#________________________________________________________________________________
-#--------------------------------------------------------------------------------
-# Base Maps
-#--------------------------------------------------------------------------------
-#________________________________________________________________________________
-
-
-#--- Choose base boundary files (Province, country, basins)
-
-shp0<<-shp_wdspne10mAdmin0
-shp<<-shp_gadm36L1    # GCAM Regions  !!!! FOR URUGUAY NO GCAM REGION SHAPEFILE
-names(shp@data)[names(shp@data)=="NAME_0"]<-"GCAM_region"
-shp1<<-shp_gadm36L1  # GADM Provinces
-shp_basins<<-shp_PNNL235CLM5ArcMin_multi  # GCAm Basins
-#shp_subBasins<<-shp_HydroBasinsLev3  # SubBasin Map
-
-if(region_i=="Colombia"){
-shp_subBasins<<-shp_SIACHydroZones  # SubBasin Map
-shp_subBasins@data$subBasin_name<-shp_subBasins@data$NOM_ZH  # Rename the Subbasin File
-}else{
-shp_subBasins<<-shp_HydroBasinsLev4  # SubBasin Map
-shp_subBasins@data$subBasin_name<-shp_subBasins@data$HYBAS_ID  # Rename the Subbasin File
-}
-
-# Regional Selected Region
-shp0a<<-shp0[which(shp0$ADMIN==region_i),]
-shp0a@data<-droplevels(shp0a@data)
-shp0a<<-shp0a
-plot(shp0a)
-
-# Regional Selected Region
-shpa<<-shp[which(shp$GCAM_region==region_i),]
-if(region_i=="Argentina"){  # FOR ARGENTINA MERGE Ciudad de Buenos Aires into Buenos Aires
-  shpa@data$NAME_1[which(shpa@data$NAME_1=="Ciudad de Buenos Aires")]<-"Buenos Aires"
-  shpa<-aggregate(shpa, by= "NAME_1")
-}
-shpa@data<-droplevels(shpa@data)
-shpa<<-shpa
-plot(shpa)
-
-# GCAM Regional Bounding Box
-b1<<-as.data.frame(bbox(shp[which(shp$GCAM_region==region_i),]))   # Get Bounding box
-expandbyPercent<<-2; b1$min;b1$max
-b1$min[1]<-if(b1$min[1]<0){(1+expandbyPercent/100)*b1$min[1]}else{(1-expandbyPercent/100)*b1$min[1]};
-b1$min[2]<-if(b1$min[2]<0){(1+expandbyPercent/100)*b1$min[2]}else{(1-expandbyPercent/100)*b1$min[2]};
-b1$max[1]<-if(b1$max[1]<0){(1-expandbyPercent/100)*b1$max[1]}else{(1+expandbyPercent/100)*b1$max[1]};
-b1$max[2]<-if(b1$max[2]<0){(1-expandbyPercent/100)*b1$max[2]}else{(1+expandbyPercent/100)*b1$max[2]};
-b1$min;b1$max;
-b1<<-as(extent(as.vector(t(b1))), "SpatialPolygons")
-proj4string(b1)<-CRS(projX) # ASSIGN COORDINATE SYSTEM
-b1<<-b1
-
-# Simple Boundary
-shp0b<<-raster::crop(shp0,b1)
-shp0b@data<-droplevels(shp0b@data)
-shp0b<<-shp0b
-plot(shp0b)
-
-shpb<<-raster::crop(shp,b1)
-shpb@data<-droplevels(shpb@data)
-shpb<<-shpb
-plot(shpb)
-
-# GADM Boundaries Selected Region
-shpa1<<-shp1[which(shp1$NAME_0==region_i),]
-if(region_i=="Argentina"){  # FOR ARGENTINA MERGE Ciudad de Buenos Aires into Buenos Aires
-  shpa1@data$NAME_1[which(shpa1@data$NAME_1=="Ciudad de Buenos Aires")]<-"Buenos Aires"
-  shpa1<-aggregate(shpa1, by= "NAME_1")
-}
-shpa1@data<-droplevels(shpa1@data)
-shpa1<<-shpa1
-plot(shpa1)
-
-# GADM Boundaries Bounding Box
-shpb1<-raster::crop(shp1,b1)
-shpb1@data<-droplevels(shpb1@data)
-shpb1<<-shpb1
-plot(shpb1)
-
-# GCAM Basins Boundaries Bounding Box
-shpbasin<-raster::crop(shp_basins,b1)
-shpbasin@data<-droplevels(shpbasin@data)
-plot(shpbasin)
-shpbasin<<-shpbasin
-dev.off()
-
-# GCAM Basins Boundaries For Analysis
-shpbasin1<-raster::crop(shp_basins,shpa)
-shpbasin1@data<-droplevels(shpbasin1@data)
-plot(shpbasin1)
-shpbasin1<<-shpbasin1
-dev.off()
-
-if(bySubBasin==1){
-# subBasins Boundaries Bounding Box
-shpsubBasin<<-raster::crop(shp_subBasins,b1)
-shpsubBasin@data<-droplevels(shpsubBasin@data)
-plot(shpsubBasin)
-shpsubBasin<<-shpsubBasin
-dev.off()
-
-# subBasins Boundaries For Analysis
-shpsubBasin1<-raster::crop(shp_subBasins,shpa)
-shpsubBasin1@data<-droplevels(shpsubBasin1@data)
-plot(shpsubBasin1)
-shpsubBasin1<<-shpsubBasin1
-dev.off()
-
-# Dissolve subbasins
-shpsubBasin<-aggregate(shpsubBasin, by= "subBasin_name")
-shpsubBasin<<-shpsubBasin
-plot(shpsubBasin)
-shpsubBasin1<-aggregate(shpsubBasin1, by= "subBasin_name")
-shpsubBasin1<<-shpsubBasin1
-plot(shpsubBasin1)
-}
-
-#______________________
-# Merging a shapefile up
-# dissolving by country or subbasin
-#______________________
-
-# Country Selected Region
-shpa1x<-shp0a
-plot(shpa1x)
-
-# Bounding Box
-shpb1x<-shp0b
-plot(shpb1x)
-
-# Bounding Box without chosen region
-shpc1x<-gDifference(shpb1x, shpa1x)
-shpc1x<<-shpc1x
-plot(shpc1x,col="gray80",border="black")
-
-
-#---------------------
-# Base maps - Admin Boundaries Used 
-#---------------------
-
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Basemaps",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Basemaps",sep=""))}
-dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Basemaps",sep="")
-
-#-----------------------  Admin Boundaries with Labels
-
-
-m1<<- tm_shape(shpb1x) + 
-  tm_borders("grey",lwd=0.5, lty=1) +
-  tm_shape(shpa1) + 
-  tm_fill("NAME_1", style="pretty",palette="Set3",legend.show=F) +
-  #tm_legend(outside = TRUE, text.size = 1) +
-  tm_borders("grey") +
-  tm_text("NAME_1",scale=0.7,auto.placement=F, col="black") +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m1<<-m1 + tm_layout(main.title=paste(region_i," State Map",sep=""))}
-m1
-
-fname<<-paste("map_basemaps_m1_",region_i,"_provincialLabelled",sep="")
-print_PDFPNG(m1,dir=dir,filename=fname,figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
-selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-
-
-#-----------------------  Basin Boundaries with Labels
-
-m2<<- tm_shape(shpb1) + 
-  tm_borders("grey",lwd=0.5, lty=1) +
-  tm_shape(shpbasin) + 
-  tm_fill("basin_name", style="pretty",palette="Set3",legend.show=F)  +
-  tm_borders("grey") +
-  tm_text("basin_name",scale=0.7,auto.placement=F, col="black") +tm_shape(shpa) + 
-  tm_borders("black",lwd=2, lty=1) +
-  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_add_legend(title = paste("JGCRI Basins",sep=""),type = c("fill"), col = "lightcoral",border.col="grey",lwd = 1, lty = 1) +
-  tm_legend(outside = TRUE, text.size = 1) +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m2<<-m2 + tm_layout(main.title=paste(region_i," Basin Map",sep=""))}
-m2
-
-fname<<-paste("map_basemaps_m2_",region_i,"_basinsLabelled",sep="")
-print_PDFPNG(m2,dir=dir,filename=fname,figWidth_InchMaster*0.7,figHeight_InchMaster*1,pdfpng=pdfpng)
-selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-
-
-#-----------------------  Cropped Basin Boundaries with Labels
-
-m3<<- tm_shape(shpb1x) +# tm_text("NAME_0",scale=0.6,auto.placement=T, col="grey") +
-  tm_borders("grey",lwd=0.5, lty=1) +
-  tm_shape(shpbasin1) + 
-  tm_fill("basin_name", style="pretty",palette="Set3",legend.show=F,title = "JGCRI Basin")  +
-  tm_borders("grey") +
-  tm_text("basin_name",scale=0.7,auto.placement=F, col="black") +
-  #tm_shape(shpa) + tm_borders("black",lwd=2, lty=1) +
-  #tm_add_legend(title = paste("JGCRI Region ",region,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
-  #tm_legend(outside = TRUE, title.size = 1) +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m3<<-m3 + tm_layout(main.title=paste(region_i," Basin Map",sep=""))}
-m3
-fname<<-paste("map_basemaps_m3_",region_i,"_basinsLabelledCropped",sep="")
-print_PDFPNG(m3,dir=dir,filename=fname,figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
-selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-
-
-if(bySubBasin==1){
-  
-  
-  m2sub<<- tm_shape(shpb1x) + 
-    tm_borders("grey",lwd=0.5, lty=1) +
-    tm_shape(shpsubBasin1) + 
-    tm_fill("subBasin_name", style="pretty",palette="Set3",legend.show=F)  +
-    tm_borders("grey") +
-    #tm_add_legend(title = paste("JGCRI Region ",region,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
-    #tm_legend(outside = TRUE, title.size = 1) +
-    #tm_add_legend(title = paste("JGCRI subBasins",sep=""),type = c("fill"), col = "lightcoral",border.col="grey",lwd = 1, lty = 1) +
-    #tm_legend(outside = TRUE, text.size = 1) +
-    tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-    tm_scale_bar(position=c("right", "bottom"),width=0.2)+
-    tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-  if(titleOn==1){m2<<-m2 + tm_layout(main.title=paste(region_i," subBasin Map",sep=""))}
-  m2sub
-  
-  print_PDFPNG(m2sub,dir=dir,filename=paste("map_basemaps_m2sub_",region_i,"_subBasinsLabelled",sep=""),figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
-  
-  
-  
-m3sub<<- tm_shape(shpb1x) +# tm_text("NAME_0",scale=0.6,auto.placement=T, col="grey") +
-  tm_borders("grey",lwd=0.5, lty=1) +
-  tm_shape(shpsubBasin1) + 
-  tm_fill("subBasin_name", style="pretty",palette="Set3",legend.show=T,title = "Sub-Basin")  +
-  tm_borders("grey") +
-  #tm_text("subBasin_name",scale=1,auto.placement=F, col="black") +
-  #tm_shape(shpa) + tm_borders("black",lwd=2, lty=1) +
-  #tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "black", lwd = 2, lty = 1) +
-  #tm_legend(outside = TRUE, title.size = 1) +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m3<<-m3 + tm_layout(main.title=paste(region_i," subBasin Map",sep=""))}
-m3sub
-
-print_PDFPNG(m3sub,dir=dir,filename=paste("map_basemaps_m3sub_",region_i,"_subBasinsLabelledCropped",sep=""),figWidth_InchMaster*0.5,figHeight_InchMaster*0.75,pdfpng=pdfpng)
-
-m4sub<<- tm_shape(shpb1) + tm_borders("white",lwd=0.5, lty=1) +
-  tm_shape(shpa1) + tm_borders("grey",lwd=0.5, lty=1) +
-  tm_add_legend(title = "State borders",type = c("line"), col = "grey", lwd = 0.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpa) + 
-  tm_borders("blue",lwd=2.5, lty=1) +
-  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "blue", lwd = 2.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpsubBasin1) + 
-  tm_borders("red", lwd=1.5, lty=1) +
-  tm_add_legend(title = paste("subBasin boundaries ",region_i,sep=""),type = c("line"), col = "red", lwd = 1.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2) +
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m4<<-m4 + tm_layout(main.title=paste(region_i," Boundary Overlap",sep=""))}
-m4sub
-
-print_PDFPNG(m4sub,dir=dir,filename=paste("map_basemaps_m4sub_",region_i,"_regionProvincesubBasinsOutlines",sep=""),figWidth_InchMaster*1,figHeight_InchMaster*0.7,pdfpng=pdfpng)
-
-}
-
-#----------------------- Overlap of region, provinces and basins
-
-m4<<- tm_shape(shpb1) + tm_borders("white",lwd=0.5, lty=1) +
-  tm_shape(shpa1) + tm_borders("grey",lwd=0.5, lty=1) +
-  tm_add_legend(title = "State borders",type = c("line"), col = "grey", lwd = 0.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpa) + 
-  tm_borders("blue",lwd=2.5, lty=1) +
-  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "blue", lwd = 2.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpbasin1) + 
-  tm_borders("red", lwd=1.5, lty=1) +
-  tm_add_legend(title = paste("Basin boundaries ",region_i,sep=""),type = c("line"), col = "red", lwd = 1.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2) +
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m4<<-m4 + tm_layout(main.title=paste(region_i," Boundary Overlap",sep=""))}
-m4
-
-print_PDFPNG(m4,dir=dir,filename=paste("map_basemaps_m4_",region_i,"_regionProvinceBasinsOutlines",sep=""),figWidth_InchMaster*0.5,figHeight_InchMaster*.75,pdfpng=pdfpng)
-
-
-
-#----------------------- Regional Map showing Countries
-
-m5<<- tm_shape(shpb1x) + 
-  tm_fill("ADMIN", alpha=0.9,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F) +
-  tm_shape(shpb1) + 
-  tm_borders(col="grey",lwd=1,lty=1) +
-  tm_shape(shpb1x) + tm_text("ADMIN",scale=1,auto.placement=T, col="black") +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2)+
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m5<<-m5 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
-m5
-fname<<-paste("map_basemaps_m5_",region_i,"_regionalMap",sep="")
-print_PDFPNG(m5,dir=dir,filename=fname,figWidth_InchMaster*0.5,figHeight_InchMaster*1,pdfpng=pdfpng)
-selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-
-#----------------------- Regional Map with Mapping Boundaries
-
-m6<<- tm_shape(shpb1x) + 
-  tm_fill("ADMIN", alpha=0.9,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F) +
-  tm_shape(shpb1x) + 
-  tm_borders(col="grey",lwd=0.5,lty=1) +
-  tm_shape(shpa1) + tm_borders("grey",lwd=0.5, lty=1) +
-  tm_add_legend(title = "State borders",type = c("line"), col = "grey", lwd = 0.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpa) + 
-  tm_borders("blue",lwd=2.5, lty=1) +
-  tm_add_legend(title = paste("JGCRI Region ",region_i,sep=""),type = c("line"), col = "blue", lwd = 2.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpbasin1) + 
-  tm_borders("red", lwd=1.5, lty=1) +
-  tm_add_legend(title = paste("Basin boundaries ",region_i,sep=""),type = c("line"), col = "red", lwd = 1.5, lty = 1) +
-  tm_legend(outside = TRUE, title.size = 1) +
-  tm_shape(shpb1x) + tm_text("ADMIN",scale=1,auto.placement=T, col="black") +
-  tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  tm_scale_bar(position=c("right", "bottom"),width=0.2) +
-  tm_layout(frame = TRUE, bg.color="white")+ tm_layout_z
-if(titleOn==1){m6<<-m6 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
-m6
-
-fname<<-paste("map_basemaps_m6_",region_i,"_regionalMapBasinsProvinces",sep="")
-print_PDFPNG(m6,dir=dir,filename=fname,figWidth_InchMaster*0.6,figHeight_InchMaster*0.75,pdfpng=pdfpng)
-selectedFigs<<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-
-
-#-----------------------  Surrounding Regions and Ocean for Plotting with Analysis Layers
-
-
-
-m7<<- tm_shape(shpc1x) + 
-  tm_fill("gray90",alpha=0.8,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F)  +
-  tm_shape(shpb1x) + tm_text("ADMIN",scale=0.6,auto.placement=F,col="grey") + tm_borders("black",lwd=1,lty=1) +
-  #tm_shape(shpa1x) + 
-  #tm_fill("white",alpha=0.5,style="pretty",palette="Set3",title=paste("Country",sep=""),legend.show = F)  +
-  tm_borders("black",lwd=1,lty=1) +
-  #tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  #tm_scale_bar(position=c("right", "bottom"),width=0.2) +
-  tm_layout(frame = TRUE, bg.color="lightcyan") + tm_layout_z
-if(titleOn==1){m7<<-m7 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
-m7
-
-
-print_PDFPNG(m7,dir=dir,filename=paste("map_basemaps_m7_",region_i,"_regionForAnalysis",sep=""),
-             figWidth_InchMaster*0.5,figHeight_InchMaster*0.75,pdfpng=pdfpng)
-
-
-m8<<-tm_shape(shpb1x) + tm_text("ADMIN",scale=0.6,auto.placement=F,col="grey") + tm_borders("black",lwd=1,lty=1) +
-  tm_borders("black",lwd=1,lty=1) +
-  #tm_compass(north=0,type="arrow", position=c("right", "bottom"),size=1.5) +
-  #tm_scale_bar(position=c("right", "bottom"),width=0.2) + tm_layout_z
-if(titleOn==1){m7<<-m7 + tm_layout(main.title=paste(region_i," Regional Map",sep=""))}
-m8
-
-print_PDFPNG(m8,dir=dir,filename=paste("map_basemaps_m8_",region_i,"_regionForAnalysisBlank",sep=""),
-             figWidth_InchMaster*0.5,figHeight_InchMaster*0.75,pdfpng=pdfpng)
-
 
 #________________________________________________________________________________
 #--------------------------------------------------------------------------------
@@ -1998,7 +2208,7 @@ moduleParam<-"demWatmmPerYr"  # Type of parameter for fig names demWatmmPerYr
 moduleUnits<- "mm"            # Units used for figures
 moduleTitleText<- "Water Demands (mm)"  # Title for figures. Used when titleOn is 1
 moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
-moduleRemove<-c("Total","Non_Agriculture")   # Remove certain categories for particular modules. Make c("") if not needed
+moduleRemove<-c("Total","Non_Agriculture")   # Remove certain categories for particular modules. Make NULL if not needed
 
 maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
                  moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
@@ -2070,7 +2280,7 @@ if(runDemeterMaps==1){
   moduleUnits<- "fraction"            # Units used for figures
   moduleTitleText<- "Land Cover (Fractional)"  # Title for figures. Used when titleOn is 1
   moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
-  moduleRemove<-c("")   # Remove certain categories for particular modules. Make c("") if not needed
+  moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
   
   maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
                    moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
@@ -2097,7 +2307,7 @@ if(runXanthosMaps==1){
   moduleUnits<- "mm"            # Units used for figures
   moduleTitleText<- "Water Supply (mm)"  # Title for figures. Used when titleOn is 1
   moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
-  moduleRemove<-c("")   # Remove certain categories for particular modules. Make c("") if not needed
+  moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
   
   # Create Output Directory
   if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup",sep=""))}
@@ -2238,13 +2448,13 @@ years<-c(years_tethys,paste("Mean_",min(years_scarcityX),"to",max(years_scarcity
 #--- Set paramters for function
 #------------------------------  
 
-# Setup for running function maps_ReAggregaget
+# Setup for running function maps_ReAggregage
 moduleName<-"scarcity"  # Name of module being run tethys, xanthos, scarcity etc.
 moduleParam<-"scarcityFrac"  # Type of parameter for fig names demWatmmPerYr
 moduleUnits<- "Fraction"            # Units used for figures
 moduleTitleText<- "Water Scarcity"  # Title for figures. Used when titleOn is 1
 moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
-moduleRemove<-c("")   # Remove certain categories for particular modules. Make c("") if not needed
+moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
 
 maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
                  moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
@@ -2261,16 +2471,16 @@ maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
 #--------------------------------------------------------------------------------
 #________________________________________________________________________________
 
-selectFigsparams<-gsub("Region",region_i,selectFigsparams);selectFigsparams
-reportSelFigsName<-paste("Report_SelectedFigs_",region_i,"_",scenario_i,sep="");reportSelFigsName
+selectFigsparams<<-gsub("Region",region_i,selectFigsparams);selectFigsparams
+reportSelFigsName<<-paste("Report_SelectedFigs_",region_i,"_",scenario_i,sep="");reportSelFigsName
 
-if(dir.exists(paste(wdfigsOut,"/SelectedFigs/",reportSelFigsName,sep=""))){unlink(paste(wdfigsOut,"/SelectedFigs/",reportSelFigsName,sep=""),recursive=T)}
-if(!dir.exists(paste(wdfigsOut,"/SelectedFigs/",reportSelFigsName,sep=""))){
-  dir.create(paste(wdfigsOut,"/SelectedFigs",sep=""));dir.create(paste(wdfigsOut,"/SelectedFigs/",reportSelFigsName,sep=""))}
+if(!dir.exists(paste(wd0,"/fig_outputsSelect",sep=""))){dir.create(paste(wd0,"/fig_outputsSelect",sep=""))}
+if(dir.exists(paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""))){unlink(paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""),recursive=T)}
+if(!dir.exists(paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""))){dir.create(paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""))}
 
-if(pdfpng!=1){selectedFigsPnG<-gsub(".pdf",".png",selectedFigs);selectedFigs<-c(selectedFigs,selectedFigsPnG)}
 selectedFigs
         
-selectedFigsX<-grep(paste(selectFigsparams, collapse="|"),selectedFigs,value=T);selectedFigsX
-file.copy(selectedFigsX,to=paste(wdfigsOut,"/SelectedFigs/",reportSelFigsName,sep=""),overwrite=T,recursive=T)
-}#Close Scenarios
+selectedFigsX<<-grep(paste(selectFigsparams, collapse="|"),selectedFigs,value=T);selectedFigsX
+file.copy(selectedFigsX,to=paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""),overwrite=T,recursive=T)
+}#Close scenariosIndv
+

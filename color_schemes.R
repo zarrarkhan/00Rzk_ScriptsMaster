@@ -202,11 +202,15 @@ biouse_colors <<- c( "direct buildings" = "#a8d8fe",
 # New Color Schemes
 #-------------------------------------------
 
+#library(colorspace)
+#pal<-choose_palette()
+colorsX_BrPr<<-c("#693C01","#9C7D6A","#F1F1F1","#8480A2","#473E7A")
+pie(rep(1,length(colorsX_BrPr)),label=names(colorsX_BrPr),col=colorsX_BrPr)
 
 # Custom Colors for large unassigned palettes
 # Custom Colors https://stackoverflow.com/questions/15282580/how-to-generate-a-number-of-most-distinctive-colors-in-r
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-colorsX_Unassigned= unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+colorsX_Unassigned<<- unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 
 
 # Color scheme for electricity generation by aggregate fuel
@@ -219,11 +223,12 @@ colorsX_elec_subsec <<- c( "coal" = "#a0237c","gas" = "#25a9e0","oil" = "#d01c2a
                            "refined liquids" = "#507fab",
                            "electricity" = "grey40")
 
-pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_subsec.pdf",sep=""))  # Print Colors for reference
+#pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_subsec.pdf",sep=""))  # Print Colors for reference
 pie(rep(1,length(colorsX_elec_subsec)),label=names(colorsX_elec_subsec),col=colorsX_elec_subsec)
-dev.off()
+#dev.off()
 
-colorsX_elec_techs <<- c( "Gen_III" = "#af8e27",
+colorsX_elec_techs <<- c( "nuclear" = "#af8e27",
+                          "Gen_III" = "#af8e27",
                           "Gen_II_LWR" = "#ef8e27",
                           "CSP" = "#cdd67b",
                           "PV" = "#fdd67b",
@@ -240,6 +245,7 @@ colorsX_elec_techs <<- c( "Gen_III" = "#af8e27",
                           "gas (CT)" = "#25e9e0",
                           "gas (steam)" = "#25f9e0",
                           "hydro" = "#fdfa28",
+                          "refined liquids" = "#000000",
                           "refined liquids (CC CCS)" = "#000000",
                           "refined liquids (CC)" = "#000000",
                           "refined liquids (CT)" = "#000000",
@@ -249,9 +255,9 @@ colorsX_elec_techs <<- c( "Gen_III" = "#af8e27",
 
 
 pie(rep(1,length(colorsX_elec_techs)),label=names(colorsX_elec_techs),col=colorsX_elec_techs)
-pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_techs.pdf",sep=""))  # Print Colors for reference
+#pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_techs.pdf",sep=""))  # Print Colors for reference
 pie(rep(1,length(colorsX_elec_techs)),label=names(colorsX_elec_techs),col=colorsX_elec_techs)
-dev.off()
+#dev.off()
 
 
 colorsX_elec_sec<<-c( "elect_td_bld" = "#ff230e",
@@ -259,15 +265,17 @@ colorsX_elec_sec<<-c( "elect_td_bld" = "#ff230e",
                       "elect_td_trn" = "dodgerblue",
                       "electricity" = "#ea9219")
 
-pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_sec.pdf",sep=""))  # Print Colors for reference
+#pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_sec.pdf",sep=""))  # Print Colors for reference
 pie(rep(1,length(colorsX_elec_sec)),label=names(colorsX_elec_sec),col=colorsX_elec_sec)
-dev.off()
+#dev.off()
 
 
 colorsX_finalNrg_sec<<-c( "building" = "#facda4",
                           "comm non-building" = "#ff230e",
                           "industry" = "#cef4d1",
-                          "transportation" = "#d0f6f7")
+                          "transportation" = "#d0f6f7",
+                          "trn_pass_road_bus" = "purple",
+                          unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))))
 
 # Custom Colors for large unassigned palettes
 # Custom Colors https://stackoverflow.com/questions/15282580/how-to-generate-a-number-of-most-distinctive-colors-in-r
@@ -285,9 +293,9 @@ colorsX_elec_subsec <- c( "coal" = "#a0237c","gas" = "#25a9e0","oil" = "#d01c2a"
                           "refined liquids" = "#507fab")
 
 # Print Colors palettes to view for reference
-pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_subsec.pdf",sep=""))  
+#pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_elec_subsec.pdf",sep=""))  
 pie(rep(1,length(colorsX_elec_subsec)),label=names(colorsX_elec_subsec),col=colorsX_elec_subsec)
-dev.off()
+#dev.off()
 
 # Modified color scheme for Primary energy consumption
 # Modified the "Primary energy colors including CCS - PAL_pri_ene" color scheme from color_scheme.R 
@@ -312,9 +320,9 @@ colorsX_PAL_pri_ene<- c(
   "energy reduction" = "black")
 
 # Print Colors palettes to view for reference
-pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  
+#pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  
 pie(rep(1,length(colorsX_PAL_pri_ene)),label=names(colorsX_PAL_pri_ene),col=colorsX_PAL_pri_ene)
-dev.off()
+#dev.off()
 
 # Modified color scheme for elec
 # Modified the "Primary energy colors including CCS - PAL_pri_ene" color scheme from color_scheme.R 
@@ -340,7 +348,7 @@ colorsX_elec_tech_colors <- c( "a Coal" = "gray60",
                                "energy reduction" = "grey")
 
 # Print Colors palettes to view for reference
-pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  
+#pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  
 pie(rep(1,length(colorsX_elec_tech_colors)),label=names(colorsX_elec_tech_colors),col=colorsX_elec_tech_colors)
-dev.off()
+#dev.off()
 
