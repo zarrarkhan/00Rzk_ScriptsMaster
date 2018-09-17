@@ -116,68 +116,116 @@ fig_dispatchGenHours<<- function(l1){
   p <- ggplot(l1, aes(ymin = yc, group=Fill))
   p <- p + geom_rect(aes(xmin = wm, xmax = w,ymax = yc2,fill = Fill)) + z_theme
   p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
-  p <- p + xlab(eval(parse(text=unique(l1$NewUnits)))) + ylab(eval(parse(text=unique(l1$CostUnits))))
+  p <- p + xlab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~")))) + ylab(eval(parse(text=unique(l1$CostUnits))))
   p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p <- p + scale_fill_manual(values=paletteX)
 }
 
 fig_dispatchCurve<<- function(l1){
   
-  paletteX<-get(l1$FillPalette);
-  if(useNewLabels==1){
-    if(!is.null(names(paletteX))){
-      names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
-    l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
-  }
-  
+  if(!is.null(unique(l1[["Fill"]]))){
+    paletteX<-get(l1$FillPalette);
+    if(useNewLabels==1){
+      if(!is.null(names(paletteX))){
+        names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+      l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+    }}
   p <- ggplot(l1, aes(ymin = 0))
   p <- p + geom_rect(aes(xmin = wm, xmax = w,ymax = Cost, fill = Fill)) + z_theme
   p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
-  p <- p + xlab(eval(parse(text=unique(l1$NewUnits)))) + ylab(eval(parse(text=unique(l1$CostUnits))))
+  p <- p + xlab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~")))) + ylab(eval(parse(text=unique(l1$CostUnits))))
   p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p <- p + scale_fill_manual(values=paletteX)
 }
 
 fig_LineCompareParam<<- function(l1){
+  
+  if(!is.null(unique(l1[["Fill"]]))){
+    paletteX<-get(l1$FillPalette);
+    if(useNewLabels==1){
+      if(!is.null(names(paletteX))){
+        names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+      l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+    }}
+  
   #l1<-l1[order(compare), ]
   p<-ggplot(l1,aes(x=x,y=NewValue,group=Title))
   p<-p + z_theme
   p<-p + geom_line(aes(color=Title),stat="identity",position="identity",size=2) 
   p<-p + guides(fill = guide_legend(override.aes = list(colour = NULL)))
-  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=unique(l1$NewUnits))))
+  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p<-p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p<-p + scale_x_continuous (breaks=(seq(min(range(l1$x))-breakx_majMaster,max(range(l1$x))+breakx_majMaster,by=breakx_majMaster)), 
                              minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
   p<-p + scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster)) 
-  p <- p + scale_color_brewer(palette="Set1",name="Parameter")
+  p <- p + scale_color_manual(values=colorsX_Basic,name="Parameter")
 }
 
 fig_LineCompareScenario<<- function(l1){
+  
+  if(!is.null(unique(l1[["Fill"]]))){
+    paletteX<-get(l1$FillPalette);
+    if(useNewLabels==1){
+      if(!is.null(names(paletteX))){
+        names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+      l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+    }}
+  
   #l1<-l1[order(compare), ]
   p<-ggplot(l1,aes(x=x,y=NewValue,group=scenario))
   p<-p + z_theme
   p<-p + geom_line(aes(color=scenario),stat="identity",position="identity",size=2) 
   p<-p + guides(fill = guide_legend(override.aes = list(colour = NULL)))
-  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=unique(l1$NewUnits))))
+  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p<-p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p<-p + scale_x_continuous (breaks=(seq(min(range(l1$x))-breakx_majMaster,max(range(l1$x))+breakx_majMaster,by=breakx_majMaster)), 
                              minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
   p<-p + scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster)) 
-  p <- p + scale_color_brewer(palette="Set1",name="Scenario")
+  p <- p + scale_color_manual(values=colorsX_Basic,name="Scenario")
 }
 
 
 fig_BarSingle<<-function(l1){
   
+  if(!is.null(unique(l1[["Fill"]]))){
+    paletteX<-get(l1$FillPalette);
+    if(useNewLabels==1){
+      if(!is.null(names(paletteX))){
+        names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+      l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+    }}
+  
   p <- ggplot(l1,aes(x=x,y=NewValue,group=scenario),fill="gray80",color="gray20")
   p <- p + z_theme
   p <- p + geom_bar(aes(), stat="identity",position=position_dodge(width=2))
   p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
-  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=unique(l1$NewUnits))))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p <- p + scale_x_continuous (breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_majMaster)), 
                                minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
   p <- p +  scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))
+}
+
+fig_BarDodgeScenario<<-function(l1){
+  
+  if(!is.null(unique(l1[["Fill"]]))){
+  paletteX<-get(l1$FillPalette);
+  if(useNewLabels==1){
+    if(!is.null(names(paletteX))){
+      names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+    l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+  }}
+  
+  p <- ggplot(l1,aes(x=x,y=NewValue,group=scenario,fill=scenario),color="gray20")
+  p <- p + z_theme
+  p <- p + geom_bar(aes(), stat="identity",position='dodge')
+  p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title="Scenario"))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
+  p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+  p <- p + scale_x_continuous (breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_majMaster)), 
+                               minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
+  p <- p +  scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))
+  p <- p + scale_fill_manual(values=colorsX_Basic,name="Scenario")
 }
 
 
@@ -186,12 +234,32 @@ fig_LineSingle<<- function(l1){
   p<-p + z_theme
   p<-p + geom_line(aes(),color="red",stat="identity",position="identity",size=2) 
   p<-p + guides(fill = guide_legend(override.aes = list(colour = NULL)))
-  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=unique(l1$NewUnits))))
+  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p<-p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p<-p + scale_x_continuous (breaks=(seq(min(range(l1$x))-breakx_majMaster,max(range(l1$x))+breakx_majMaster,by=breakx_majMaster)), 
                              minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
   p<-p + scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))}
 
+fig_Bar2Fill<<-function(l1){
+  
+  paletteX<-get(l1$FillPalette1);
+  if(useNewLabels==1){
+    if(!is.null(names(paletteX))){
+      names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+    l1$Fill1<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill1))
+  }
+  
+  p <- ggplot(l1[order((l1$Fill1)),],aes(x=scenario,y=NewValue,group=scenario, fill=Fill1))
+  p <- p + z_theme
+  p <- p + geom_bar(aes(), stat="identity",position="stack")
+  p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel1)))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
+  p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+  #p <- p + scale_x_continuous (breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_majMaster)), 
+  #                             minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
+  p <- p +  scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))
+  p <- p + scale_fill_manual(values=paletteX)
+}
 
 fig_Bar<<-function(l1){
   
@@ -206,12 +274,58 @@ fig_Bar<<-function(l1){
   p <- p + z_theme
   p <- p + geom_bar(aes(), stat="identity",position="stack")
   p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
-  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=unique(l1$NewUnits))))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p <- p + scale_x_continuous (breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_majMaster)), 
                                minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
   p <- p +  scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))
   p <- p + scale_fill_manual(values=paletteX)
+}
+
+fig_BarXfactor<<-function(l1){
+  
+  paletteX<-get(l1$FillPalette);
+  if(useNewLabels==1){
+    if(!is.null(names(paletteX))){
+      names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+    l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+  }
+  
+  p <- ggplot(l1[order((l1$Fill)),],aes(x=x,y=NewValue,group=scenario, fill=Fill))
+  p <- p + z_theme
+  p <- p + geom_bar(aes(), stat="identity",position="stack")
+  p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
+  p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+  p <- p +  scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))
+  p <- p + scale_fill_manual(values=paletteX)
+}
+
+
+fig_BarVarWidth<<-function(l1){
+  
+  paletteX<-get(l1$FillPalette);
+  if(useNewLabels==1){
+    if(!is.null(names(paletteX))){
+      names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+    l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+  }
+  
+  p <- ggplot(l1[order((l1$Fill)),],aes(x=x,y=NewValue,group=scenario, fill=Fill,width=hours))
+  p <- p + geom_text(aes(x=x,y=-2,label=hours),size=7) + geom_text(aes(x=x,y=Sum,label=segment),vjust=-1.5,size=7)
+  p <- p + z_theme
+  p <- p + geom_bar(aes(), stat="identity",position="stack")
+  p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
+  p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+  p <- p + scale_x_continuous (breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_majMaster)), 
+                               minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
+  p <- p +  scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster))
+  p <- p + scale_fill_manual(values=paletteX) + theme(axis.text.x=element_blank())
+  p<- p + theme(panel.border=element_rect(fill = NA, colour = NA),
+                strip.background=element_rect(fill = NA, colour = NA),
+                strip.text = element_blank(),
+                panel.spacing = unit(0,'lines'))
 }
 
 
@@ -228,7 +342,7 @@ fig_LineMultiple<<-function(l1){
   p <- p + z_theme
   p <- p + geom_line(aes(color=Fill),stat="identity",position="identity",size=2) 
   p <- p + guides(fill = guide_legend(color=NULL,reverse=T,title=unique(l1$FillLabel)))
-  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=unique(l1$NewUnits))))
+  p <- p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p <- p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
   p <- p + scale_x_continuous (breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_majMaster)), 
                                minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
@@ -237,8 +351,13 @@ fig_LineMultiple<<-function(l1){
 }
 
 mapX_fill2Var<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scenario",var2="Fill"){
-  tm_shape(data) + tm_fill(col=val,palette = colx,style="fixed",breaks=pretty_breaks(5)(range(scaleData[complete.cases(scaleData),])),
-                           auto.palette.mapping = FALSE, legend.show=T,title="",showNA=F,colorNA="white") + 
+  nbreaks<-11
+  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  nbreaksX<-length(pretty_breaks(nbreaks)(a))
+  colx1<-colorRampPalette(colx)(nbreaksX-1)
+  
+  tm_shape(data) + tm_fill(col=val,palette = colx1,style="fixed",breaks=pretty_breaks(nbreaks)(a),
+                            midpoint = 0, legend.show=T,title="",showNA=F,colorNA="white") + 
     tm_facets(by=c(var1,var2),free.scales.fill=FALSE) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_layout(panel.label.bg.color = "white",
@@ -257,9 +376,15 @@ mapX_fill2Var<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scena
 }
 
 
+
 mapX_fill<<- function(data=dfx,scaleData=dfx@data){
-  tm_shape(data) + tm_fill(col=names(data),palette = colx,style="fixed",breaks=pretty_breaks(5)(range(scaleData[complete.cases(scaleData),])),
-                           auto.palette.mapping = FALSE, legend.show=T,title="",showNA=F) + 
+  nbreaks<-5
+  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  nbreaksX<-length(pretty_breaks(nbreaks)(a))
+  colx1<-colorRampPalette(colx)(nbreaksX-1)
+  
+  tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="fixed",breaks=pretty_breaks(nbreaks)(a),
+                            midpoint = 0, legend.show=T,title="",showNA=F) + 
     tm_facets(free.scales.fill=FALSE) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_layout(panel.labels=gsub("X","",names(data)),
@@ -278,8 +403,13 @@ mapX_fill<<- function(data=dfx,scaleData=dfx@data){
 }
 
 mapX_fillFreeScale<<- function(data=dfx){
-  tm_shape(data) + tm_fill(col=names(data),palette = colx,style="pretty",n=5,
-                           auto.palette.mapping = FALSE, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
+  nbreaks<-5
+  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  nbreaksX<-length(pretty_breaks(nbreaks)(a))
+  colx1<-colorRampPalette(colx)(nbreaksX-1)
+  
+  tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="pretty",n=pretty_breaks(nbreaks)(a),
+                            midpoint = 0, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
     tm_legend(outside = F, text.size = .8)+
     tm_layout(panel.labels=gsub("X","",names(data)),
               panel.label.bg.color = "white",
@@ -291,9 +421,14 @@ mapX_fillFreeScale<<- function(data=dfx){
 
 #Ztest
 mapX_raster<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
+  nbreaks<-5
+  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  nbreaksX<-length(pretty_breaks(nbreaks)(a))
+  colx1<-colorRampPalette(colx)(nbreaksX-1)
+  
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
-    tm_shape(data) +  tm_raster(col=names(data),palette = colx,style="fixed",breaks=pretty_breaks(5)(range(scaleData[complete.cases(scaleData),])),
-                                auto.palette.mapping = FALSE, legend.show=T,title="",showNA=F) + 
+    tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="fixed",breaks=pretty_breaks(nbreaks)(a),
+                                 midpoint = 0, legend.show=T,title="",showNA=F) + 
     tm_facets(free.scales=FALSE) +
     tm_layout(panel.labels=gsub("X","",names(data)),
               panel.label.bg.color = "white",
@@ -310,10 +445,14 @@ mapX_raster<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
     tm_shape(shpa1) + tm_borders("black",lwd=0.5,lty=2) 
 }
 
+
 mapX_rasterFreeScale<<-function(rasterBoundary=dfxtra,data=dfx){
+  nbreaks<-5
+  colx1<-colorRampPalette(colx)(nbreaks)
+  
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
-    tm_shape(data) +  tm_raster(col=names(data),palette = colx,style="pretty",n=5,
-                                auto.palette.mapping = FALSE, legend.show=T,showNA=F) + 
+    tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="pretty",n=nbreaks,
+                                 midpoint = 0, legend.show=T,showNA=F) + 
     tm_facets(free.scales=T) +
     tm_layout(panel.labels=gsub("X","",names(data)),
               panel.label.bg.color = "white",
@@ -328,9 +467,12 @@ mapX_rasterFreeScale<<-function(rasterBoundary=dfxtra,data=dfx){
 # KMEANS Versions for uneven distributions
 
 mapX_fillKMeans<<- function(data=dfx,scaleData=dfx@data){
-  tm_shape(data) + tm_fill(col=names(data),palette = colx,
-                           style="fixed",breaks=classIntervals(as.numeric(as.vector(as.matrix(scaleData)),rm.na=T), n=5, style = "kmeans")[2]$brks,
-                           auto.palette.mapping = FALSE, legend.show=T,title="",showNA=F) + 
+  nbreaks<-5
+  colx1<-colorRampPalette(colx)(nbreaks)
+  
+  tm_shape(data) + tm_fill(col=names(data),palette = colx1,
+                           style="fixed",breaks=classIntervals(as.numeric(as.vector(as.matrix(scaleData)),rm.na=T), n=nbreaks, style = "kmeans")[2]$brks,
+                            midpoint = 0, legend.show=T,title="",showNA=F) + 
     tm_facets(free.scales.fill=FALSE) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_layout(panel.labels=gsub("X","",names(data)),
@@ -349,8 +491,11 @@ mapX_fillKMeans<<- function(data=dfx,scaleData=dfx@data){
 }
 
 mapX_fill2VarKmeans<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scenario",var2="Fill"){
-  tm_shape(data) + tm_fill(col=val,palette = colx,style="kmeans",breaks=pretty_breaks(5)(range(scaleData[complete.cases(scaleData),])),
-                           auto.palette.mapping = FALSE, legend.show=T,title="",showNA=F, colorNA = "white") + 
+  nbreaks<-5
+  colx1<-colorRampPalette(colx)(nbreaks)
+  
+  tm_shape(data) + tm_fill(col=val,palette = colx1,style="kmeans",breaks=nbreaks,
+                           midpoint = 0, legend.show=T,title="",showNA=F, colorNA = "white") + 
     tm_facets(by=c(var1,var2),free.scales.fill=F) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_layout(panel.label.bg.color = "white",
@@ -375,8 +520,11 @@ mapX_fill2VarKmeans<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1=
 #____________________________________________
 
 mapX_fillFreeScaleKMeans<<- function(data=dfx){
-  tm_shape(data) + tm_fill(col=names(data),palette = colx,style="kmeans",n=5,
-                           auto.palette.mapping = FALSE, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
+  nbreaks<-5
+  colx1<-colorRampPalette(colx)(nbreaks)
+  
+  tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="kmeans",n=nbreaks,
+                            midpoint = 0, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
     tm_legend(outside = F, text.size = .8)+
     tm_layout(panel.labels=gsub("X","",names(data)),
               panel.label.bg.color = "white",
@@ -391,10 +539,14 @@ mapX_fillFreeScaleKMeans<<- function(data=dfx){
 
 ##Ztest
 mapX_rasterKMeans<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
+  
+  nbreaks<-5
+  colx1<-colorRampPalette(colx)(nbreaks)
+  
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F,showNA=F) +
-    tm_shape(data) +  tm_raster(col=names(data),palette = colx,
-                                style="fixed",breaks=classIntervals(as.numeric(as.vector(as.matrix(scaleData)),rm.na=T), n=5, style = "kmeans")[2]$brks,
-                                auto.palette.mapping = FALSE, legend.show=T,title="") + 
+    tm_shape(data) +  tm_raster(col=names(data),palette = colx1,
+                                style="fixed",breaks=classIntervals(as.numeric(as.vector(as.matrix(scaleData)),rm.na=T), n=nbreaks, style = "kmeans")[2]$brks,
+                                 midpoint = 0, legend.show=T,title="") + 
     tm_facets(free.scales=FALSE) +
     tm_layout(panel.labels=gsub("X","",names(data)),
               panel.label.bg.color = "white",
@@ -412,9 +564,12 @@ mapX_rasterKMeans<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)
 }
 
 mapX_rasterFreeScaleKMeans<<-function(rasterBoundary=dfxtra,data=dfx){
+  nbreaks<-5
+  colx1<-colorRampPalette(colx)(nbreaks)
+  
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
-    tm_shape(data) +  tm_raster(col=names(data),palette = colx,style="kmeans",n=5,
-                                auto.palette.mapping = FALSE, legend.show=T,showNA=F) + 
+    tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="kmeans",n=nbreaks,
+                                 midpoint = 0, legend.show=T,showNA=F) + 
     tm_facets(free.scales=T) +
     tm_layout(panel.labels=gsub("X","",names(data)),
               panel.label.bg.color = "white",

@@ -47,6 +47,7 @@ years_analysisXanthos<<-seq(1950,2005,by=1) # For Xanthos
 yearsXanthos<<-paste("X",years_analysisXanthos,sep="")  # To put in format that is read in from tethys
 
 
+
 delay<<-60 # Animation delay
 colx<<-(brewer.pal(5,"YlOrRd")) #------Choose color palette
 
@@ -67,7 +68,6 @@ pdfpng='png'  #'pdf', 'png', or 'both'
 # Map PDF details
 mapWidthInch<<-10
 mapHeightInch<<-8
-
 
 #______________________
 # New Functions
@@ -1193,8 +1193,8 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
         }
         }}
-        
       } # Close if ! type in moduleRemove
+        
       }# Close bySubBasin
     } # Close if empty because Type is 0
   } # Close Type
@@ -1582,13 +1582,12 @@ print_PDFPNG(m8,dir=dir,filename=paste("map_basemaps_m8_",region_i,"_regionForAn
 # Charts (df_all)
 #-----------
 
-if(TRUE){
-df_allX<-data.frame()
+
+df_all<-data.frame()
 
 # Total final energy by aggregate end-use sector
 tbl <- getQuery(queryData.proj, "Total final energy by aggregate end-use sector") # Tibble 
 df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
 df$technology<-"Technology"
 names(df)[names(df)=="sector"]<-"subsector"
 df$vintage<-paste("Vint_",df$year,sep=""); 
@@ -1608,13 +1607,12 @@ df<-df %>% mutate (Fill1=technology,
                    FillLabel2="Sector",
                    FillPalette2="colorsX_finalNrg_sec") %>%  
   subset(.,select=-c(technology,subsector));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-df_allX_finalNrgBySec<-df
+df_all<-rbind.data.frame(df_all,df); head(df_all)
+df_all_finalNrgBySec<-df
 
-# GDP per capita MER by region
+# Total final energy by aggregate end-use sector
 tbl <- getQuery(queryData.proj, "GDP per capita MER by region") # Tibble 
 df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
 df$technology<-"Technology"
 df$sector<-"Sector"
 df$vintage<-paste("Vint_",df$year,sep=""); 
@@ -1627,722 +1625,353 @@ df$x<-df$year
 df$xLabel<-"Year"
 df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
 df$segment<-"Segment"
-df<-df %>% mutate (Fill1="GDP Per Capita",
-                   FillLabel1="GDP Per Capita",
-                   FillPalette1="cbPalette",
-                   Fill2="GDP Per Capita",
-                   FillLabel2="GDP Per Capita",
-                   FillPalette2="cbPalette") %>%  
-  subset(.,select=-c(technology,sector));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-
-# GDP MER per Region
-tbl <- getQuery(queryData.proj, "GDP MER by region") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-df$technology<-"Technology"
-df$sector<-"Sector"
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"gdp"; head(df) 
-df$Query<-"GDP MER by region"
-df$Title<-"GDP MER"
-df$NewValue<-df$value/1000
-df$NewUnits<-"GDP~(Billion~1990~USD)"  # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-"Segment"
-df<-df %>% mutate (Fill1="GDP",
-                   FillLabel1="GDP",
-                   FillPalette1="cbPalette",
-                   Fill2="GDP",
-                   FillLabel2="GDP",
-                   FillPalette2="cbPalette") %>%  
-  subset(.,select=-c(technology,sector));
-# Add Local Data For Comparison
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",x>=2010,x<=2030)%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="R.Delgado_DANE col dept. of stats",
-         NewValue= case_when(x==2010~290.417,
-                             x==2015~340.9086,
-                             x==2020~386.438,
-                             x==2025~448.968,
-                             x==2030~523.254),
-         value=NewValue)
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-dfgdp<-df
-
-# GDP Growth Rate
-df<-dfgdp %>% group_by(scenario,region) %>% mutate(NewValue=(NewValue-lag(NewValue,order_by=year))*100/lag(NewValue,order_by=year))
-df<-df %>% mutate (NewUnits="GDP~Growth~Rate~(Percent)", # Use ~ for spaces. Will be parsed later
-                   Units=NewUnits,
-                   value=NewValue,
-                   Aggregate="mean",  # How to aggregate over spatial and temporal units
-                   Query="Calculated",
-                   Title="GDP Growth Rate (%)",
-                   param="gdpGrowthRate",
-                   Fill1="GDP growth rate",
-                   FillLabel1="GDP growth rate",
-                   FillPalette1="cbPalette",
-                   Fill2="GDP growth rate",
-                   FillLabel2="GDP growth rate",
-                   FillPalette2="cbPalette")%>%as.data.frame;
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-# Population
-tbl <- getQuery(queryData.proj, "Population by region") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-df$technology<-"Technology"
-df$sector<-"Sector"
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"pop"; head(df) 
-df$Query<-"Population by region"
-df$Title<-"Population"
-df$NewValue<-df$value/1000
-df$NewUnits<-"Population~(Millions)"  # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-"Segment"
-df<-df %>% mutate (Fill1="Population",
-                   FillLabel1="Population",
-                   FillPalette1="cbPalette",
-                   Fill2="Population",
-                   FillLabel2="Population",
-                   FillPalette2="cbPalette") %>%  
-  subset(.,select=-c(technology,sector));
-# Add Local Data For Comparison
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",x>=2015,x<=2030)%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="R.Delgado_UN",
-         NewValue= case_when(x==2015~48.229,
-                             x==2020~50.22,
-                             x==2025~51.854,
-                             x==2030~53.134),
-         value=NewValue)
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-# Primary energy consumption by region (direct equivalent)
-tbl <- getQuery(queryData.proj, "primary energy consumption by region (direct equivalent)") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-df$technology<-"Technology"
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"primNrgConsumByFuel"; head(df) 
-df$Query<-"primary energy consumption by region (direct equivalent)"
-df$Title<-"primary energy consumption by region (direct equivalent)"
-df$NewValue<-df$value*convEJ2TWh
-df$NewUnits<-"Primary~Energy~Consumption~(TWh)" # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-"segment"
-df<-df %>% mutate (Fill1=technology,
-                   FillLabel1="Technology",
-                   FillPalette1="colorsX_Unassigned",
-                   Fill2=fuel,
-                   FillLabel2="Fuel",
-                   FillPalette2="colorsX_PAL_pri_ene") %>%  
-  subset(.,select=-c(technology,fuel));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-# Electricity generation by aggregate technology
-tbl <- getQuery(queryData.proj, "Electricity generation by aggregate technology") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-#df$technology<-technology
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"elecByTech"; head(df) 
-df$Query<-"Electricity generation by aggregate technology"
-df$Title<-"Electricity Generation"
-df$NewValue<-df$value*convEJ2TWh
-df$NewUnits<-"Electricity~Generation~(TWh)" # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-"segment"
-df<-df %>% mutate (Fill1="Fill1",
-                   FillLabel1="Fill1",
-                   FillPalette1="colorsX_Unassigned",
-                   Fill2=technology,
-                   FillLabel2="Technology",
-                   FillPalette2="colorsX_elec_tech_colors") %>%  
-  subset(.,select=-c(technology));
-# Add Local Data For Comparison
-# Add data for Existing Variables & Years
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",x>=2020,x<=2030)%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="R.Delgado_UN",
-         NewValue= case_when((x==2025 & Fill2=="m Solar")~1.29,
-                             (x==2025 & Fill2=="l Wind")~4.51,
-                             (x==2025 & Fill2=="g Biomass")~0.64,
-                             (x==2025 & Fill2=="a Coal")~2.42,
-                             (x==2025 & Fill2=="c Gas")~1.62,
-                             (x==2025 & Fill2=="k Hydro")~75.43,
-                             (x==2030 & Fill2=="m Solar")~1.53,
-                             (x==2030 & Fill2=="l Wind")~5.36,
-                             (x==2030 & Fill2=="g Biomass")~0.77,
-                             (x==2030 & Fill2=="a Coal")~8.64,
-                             (x==2030 & Fill2=="c Gas")~2.16,
-                             (x==2030 & Fill2=="k Hydro")~98.18,
-                             TRUE ~ NA_real_),
-         value=NewValue);
-# Add new Factors if needed
-dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-
-tbl <- getQuery(queryData.proj, "water consumption by sector") # Tibble
-df<-as.data.frame(tbl);head(df)                # Data frame
-df<-df%>%filter(region==region_i)
-df<-df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                               Query="water consumption by sector",
-                               Title="Water Consumption",
-                               Fill1="Fill1",
-                               FillLabel1="FillLabel1",
-                               FillPalette1="colorsX_Unassigned",
-                               Aggregate="sum",
-                               segment="segment",
-                               x=year,
-                               xLabel="Year",
-                               param="watConsumBySec",
-                               NewValue=value,
-                               NewUnits="Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
-                               Fill2=sector,
-                               FillLabel2="Sector",
-                               FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(sector));
-# Add Local Data For Comparison
-# Add data for Existing Variables & Years
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",x==2010)%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="A.Pinchao_ENA2014",
-         NewValue= case_when((x==2010 & Fill2=="agriculture")~16.760,
-                             (x==2010 & Fill2=="electricity")~6.465,
-                             (x==2010 & Fill2=="industry")~.105,
-                             (x==2010 & Fill2=="livestock")~3.049,
-                             (x==2010 & Fill2=="mining")~1.233,
-                             (x==2010 & Fill2=="municipal")~1.293,
-                             TRUE ~ NA_real_),
-         value=NewValue);
-# Add new Factors if needed
-#dfCOLx<-dfCOL[complete.cases(dfCOL),]
-#dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-tbl <- getQuery(queryData.proj, "water withdrawals by sector") # Tibble
-df<-as.data.frame(tbl);head(df)                # Data frame
-df<-df%>%filter(region==region_i)
-df<-df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                   Query="water withdrawals by sector",
-                   Title="Water Withdrawals",
-                   Fill1="Fill1",
-                   FillLabel1="FillLabel1",
-                   FillPalette1="colorsX_Unassigned",
-                   Aggregate="sum",
-                   segment="segment",
-                   x=year,
-                                 xLabel="Year",
-                                 param="watWithdrawBySec",
-                                 NewValue=value,
-                                 NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
-                                 Fill2=sector,
-                                 FillLabel2="Sector",
-                                 FillPalette2="colorsX_Unassigned") %>% 
-  subset(.,select=-c(sector));
-# Add Local Data For Comparison
-# Add data for Existing Variables & Years
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",x==2010)%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="A.Pinchao_ENA2014",
-         NewValue= case_when((x==2010 & Fill2=="agriculture")~16.760,
-                             (x==2010 & Fill2=="electricity")~7.739,
-                             (x==2010 & Fill2=="industry")~2.106,
-                             (x==2010 & Fill2=="livestock")~3.049,
-                             (x==2010 & Fill2=="mining")~1.233,
-                             (x==2010 & Fill2=="municipal")~2.963,
-                             TRUE ~ NA_real_),
-         value=NewValue);
-# Add new Factors if needed
-#dfCOLx<-dfCOL[complete.cases(dfCOL),]
-#dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-tbl <- getQuery(queryData.proj, "water withdrawals by crop") # Tibble
-df<-as.data.frame(tbl);head(df)                # Data frame
-df<-df%>%filter(region==region_i)
-df<-df[df$sector!="industry" & df$sector!="mining" & df$sector!="municipal" 
-       & df$sector!="electricity" & df$sector!="livestock",]
-df<-df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                   Query="water withdrawals by crop",
-                   Title="Water Withdrawals",
-                   Fill1="Fill1",
-                   FillLabel1="FillLabel1",
-                   FillPalette1="colorsX_Unassigned",
-                   Aggregate="sum",
-                   segment="segment",
-                   x=year,
-                                  xLabel="Year",
-                                  param="watWithdrawByCrop",
-                                  NewValue=value,
-                                  NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
-                                  Fill2=sector,
-                                  FillLabel2="Crop",
-                                  FillPalette2="colorsX_Unassigned") %>% 
-  subset(.,select=-c(sector));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-tbl <- getQuery(queryData.proj, "Ag Production by Crop Type") # Tibble
-df<-as.data.frame(tbl);head(df)              # Data frame
-df<-df%>%filter(region==region_i)
-df<-df[df$sector==df$output,]  # So that biomass is not double counted
-df1<-df %>% filter(Units=="EJ") %>% mutate (vintage=paste("Vint_",year,sep=""),
-                     Query="Ag Production by Crop Type",
-                     Title="Agricultural Production",
-                     Fill1=sector,
-                     FillLabel1="Sector",
-                     FillPalette1="colorsX_Unassigned",
-                     Aggregate="sum",
-                     segment="segment",
-                     x=year,
-          xLabel="Year",
-          param="agProdByCropBiomass",
-          NewValue=value,
-          NewUnits="Agricultural~Production~Biomass~(EJ)", # Use ~ for spaces. Will be parsed later
-          Fill2=output,
-          FillLabel2="Outputs",
-          FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(output,sector));
-df_allX<-rbind.data.frame(df_allX,df1); head(df_allX)
-
-df1 <- df %>% filter(Units=="billion m3") %>% mutate (vintage=paste("Vint_",year,sep=""),
-                                                                 Query="Ag Production by Crop Type",
-                                                                 Title="Agricultural Production",
-                                                                 Fill1=sector,
-                                                                 FillLabel1="Sector",
-                                                                 FillPalette1="colorsX_Unassigned",
-                                                                 Aggregate="sum",
-                                                                 segment="segment",
-                                                     x=year,
-          xLabel="Year",
-          param="agProdByCropForest",
-          NewValue=value,
-          NewUnits="Agricultural~Production~Forest~(billion~m^3)", # Use ~ for spaces. Will be parsed later
-          Fill2=output,
-          FillLabel2="Outputs",
-          FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(output,sector));
-df_allX<-rbind.data.frame(df_allX,df1); head(df_allX)
-
-df1 <- df %>% filter(Units=="Mt") %>% mutate (vintage=paste("Vint_",year,sep=""),
-                                                      Query="Ag Production by Crop Type",
-                                                      Title="Agricultural Production",
-                                                      Fill1=sector,
-                                                      FillLabel1="Sector",
-                                                      FillPalette1="colorsX_Unassigned",
-                                                      Aggregate="sum",
-                                                      segment="segment",x=year,
-          xLabel="Year",
-          param="agProdByCrop",
-          NewValue=value,
-          NewUnits="Agricultural~Production~Crop~(Mt)", # Use ~ for spaces. Will be parsed later
-          Fill2=output,
-          FillLabel2="Outputs",
-          FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(output,sector));
-# Add Local Data For Comparison
-# Add data for Existing Variables & Years
-dfCOL<-data.frame()
-dfCOL<-df1%>%filter(region=="Colombia",x>=2005,x<=2015)%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="A.Pinchao_AgriculturalCensus",
-         NewValue= case_when((x==2005 & Fill2=="Corn")~1.31,
-                             (x==2005 & Fill2=="FiberCrop")~0.08,
-                             (x==2005 & Fill2=="MiscCrop")~9.06,
-                             (x==2005 & Fill2=="OilCrop")~0.10,
-                             (x==2005 & Fill2=="OtherGrain")~0.44,
-                             (x==2005 & Fill2=="PalmFruit")~3.24,
-                             (x==2005 & Fill2=="Rice")~2.53,
-                             (x==2005 & Fill2=="Root_Tuber")~4.99,
-                             (x==2005 & Fill2=="SugarCrop")~21.75,
-                             (x==2005 & Fill2=="Wheat")~0.05,
-                             (x==2010 & Fill2=="Corn")~1.12,
-                             (x==2010 & Fill2=="FiberCrop")~0.06,
-                             (x==2010 & Fill2=="MiscCrop")~9.50,
-                             (x==2010 & Fill2=="OilCrop")~0.12,
-                             (x==2010 & Fill2=="OtherGrain")~0.30,
-                             (x==2010 & Fill2=="PalmFruit")~3.76,
-                             (x==2010 & Fill2=="Rice")~2.27,
-                             (x==2010 & Fill2=="Root_Tuber")~5.32,
-                             (x==2010 & Fill2=="SugarCrop")~20.24,
-                             (x==2010 & Fill2=="Wheat")~0.02,
-                             (x==2015 & Fill2=="Corn")~1.06,
-                             (x==2015 & Fill2=="FiberCrop")~0.04,
-                             (x==2015 & Fill2=="MiscCrop")~11.34,
-                             (x==2015 & Fill2=="OilCrop")~0.17,
-                             (x==2015 & Fill2=="OtherGrain")~0.27,
-                             (x==2015 & Fill2=="PalmFruit")~6.08,
-                             (x==2015 & Fill2=="Rice")~2.38,
-                             (x==2015 & Fill2=="Root_Tuber")~6.26,
-                             (x==2015 & Fill2=="SugarCrop")~24.77,
-                             (x==2015 & Fill2=="Wheat")~0.04,
-                             TRUE ~ NA_real_),
-         value=NewValue);
-# Add new Factors if needed
-#dfCOLx<-dfCOL[complete.cases(dfCOL),]
-#dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df1<-rbind.data.frame(df1,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df1); head(df_allX)
-
-#No Psature
-df1<-df1%>%filter(Fill2!="Pasture")%>%mutate(param="agProdByCropNoPasture")
-df_allX<-rbind.data.frame(df_allX,df1); head(df_allX)
-
-
-tbl <- getQuery(queryData.proj, "water withdrawals by water mapping source") # Tibble
-df<-as.data.frame(tbl);head(df)              # Data frame
-df<-df%>%filter(region==region_i)
-df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
-df$input<-gsub("water_td_irr_","",df$input);
-df$input<-gsub("_W","",df$input);head(df)
-df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                                              Query="water withdrawals by water mapping source",
-                                              Title="Water Withdrawals",
-                                              Fill1="Fill1",
-                                              FillLabel1="FillLabel1",
-                                              FillPalette1="FillPalette1",
-                                              Aggregate="sum",
-                                              segment="segment",
-                                              x=year,
-                           xLabel="Year",
-                           param="irrWatWithBasin",
-                           NewValue=value,
-                           NewUnits="Irrigation~Water~Withdrawal~(km^3)", # Use ~ for spaces. Will be parsed later
-                           Fill2=input,
-                           FillLabel2="Basin",
-                           FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(input));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-
-tbl <- getQuery(queryData.proj, "water consumption by water mapping source") # Tibble
-df<-as.data.frame(tbl);head(df)              # Data frame
-df<-df%>%filter(region==region_i)
-df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
-df$input<-gsub("water_td_irr_","",df$input);
-df$input<-gsub("_C","",df$input);head(df)
-df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                     Query="water consumption by water mapping source",
-                     Title="Water Consumption",
-                     Fill1="Fill1",
-                     FillLabel1="FillLabel1",
-                     FillPalette1="FillPalette1",
-                     Aggregate="sum",
-                     segment="segment",
-                     x=year,
-                           xLabel="Year",
-                           param="irrWatConsBasin",
-                           NewValue=value,
-                           NewUnits="Irrigation~Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
-                           Fill2=input,
-                           FillLabel2="Basin",
-                           FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(input));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-tbl <- getQuery(queryData.proj, "aggregated land allocation") # Tibble
-df<-as.data.frame(tbl);head(df)              # Data frame
-df<-df%>%filter(region==region_i)
-df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                     Query="aggregated land allocation",
-                     Title="Land Allocation",
-                     Fill1="Fill1",
-                     FillLabel1="FillLabel1",
-                     FillPalette1="FillPalette1",
-                     Aggregate="sum",
-                     segment="segment",
-                     x=year,
-                        xLabel="Year",
-                        param="aggLandAlloc",
-                        NewValue=value,
-                        NewUnits="Land~Allocation~(km^2)", # Use ~ for spaces. Will be parsed later
-                        Fill2=landleaf,
-                        FillLabel2="Type",
-                        FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(landleaf));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-tbl <- getQuery(queryData.proj, "Land Use Change Emission (future)") # Tibble
-df<-as.data.frame(tbl);head(df)              # Data frame
-df<-df%>%filter(region==region_i)
-df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                     Query="Land Use Change Emission (future)",
-                     Title="LUC Emissions",
-                     Fill1="Fill1",
-                     FillLabel1="FillLabel1",
-                     FillPalette1="colorsX_Unassigned",
-                     Aggregate="sum",
-                     segment="segment",
-                     x=year,
-                     xLabel="Year",
-                     param="LUCemissFut",
-                     NewValue=value*(GWP%>%filter(ghg=="CO2")%>%dplyr::select(GWPType))[1,1],
-                     NewUnits="(MTCO2~Eq.)",  # Use ~ for spaces. Will be parsed later
-                     Fill2=`land-use-change-emission`,
-                     FillLabel2="Type",
-                     FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(`land-use-change-emission`));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-dfLUCEmissions<-df
-
-if(FALSE){ # Removing for now because not interested in historical LUC Emissions
-tbl <- getQuery(queryData.proj, "Land Use Change Emission") # Tibble
-df<-as.data.frame(tbl);head(df)              # Data frame
-df<-df%>%filter(region==region_i)
-df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
-                     Query="Land Use Change Emission",
-                     Title="LUC Emissions",
-                     Fill1="Fill1",
-                     FillLabel1="FillLabel1",
-                     FillPalette1="colorsX_Unassigned",
-                     Aggregate="sum",
-                     segment="segment",
-                     x=year,
-                     xLabel="Year",
-                     param="LUCemiss",
-                     NewValue=value*(GWP%>%filter(ghg=="CO2")%>%dplyr::select(GWPType))[1,1],
-                     NewUnits="(MTCO2~Eq.)",  # Use ~ for spaces. Will be parsed later
-                     Fill2=`land-use-change-emission`,
-                     FillLabel2="Type",
-                     FillPalette2="colorsX_Unassigned") %>%
-  subset(.,select=-c(`land-use-change-emission`));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-}
-
-# CO2 Emissions
-tbl <- getQuery(queryData.proj, "CO2 Emissions") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-df$technology<-"Technology"
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"co2emission"; head(df) 
-df$Query<-"CO2 Emissions"
-df$Title<-"CO2 Emissions"
-df$NewValue<-df$value*(GWP%>%filter(ghg=="CO2")%>%dplyr::select(GWPType))[1,1]
-df$NewUnits<-"(MTCO2~Eq.)"  # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-"Segment"
-df<-df %>% mutate (Fill1=subsector,
-                   FillLabel1="Subsector",
-                   FillPalette1="colorsX_Unassigned",
-                   Fill2=sector,
-                   FillLabel2="Sector",
-                   FillPalette2="colorsX_Unassigned") %>%  
-  subset(.,select=-c(technology,sector,subsector));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-# CO2 Emissions by EndUSe
-tbl <- getQuery(queryData.proj, "CO2 Emissions by enduse") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-df$technology<-"Technology"
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"co2emissionByEndUse"; head(df) 
-df$Query<-"CO2 Emissions"
-df$Title<-"CO2 Emissions"
-df$NewValue<-df$value*(GWP%>%filter(ghg=="CO2")%>%dplyr::select(GWPType))[1,1]
-df$NewUnits<-"(MTCO2~Eq.)"  # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-"Segment"
 df<-df %>% mutate (Fill1=technology,
                    FillLabel1="Sector",
-                   FillPalette1="colorsX_Unassigned",
+                   FillPalette1="Set1",
                    Fill2=sector,
                    FillLabel2="Sector",
-                   FillPalette2="colorsX_Unassigned") %>%  
+                   FillPalette2="Set1") %>%  
   subset(.,select=-c(technology,sector));
-# Add in Landuse Emissions
-dfLUCAbs<-dfLUCEmissions%>%filter(NewValue<0)%>%mutate(Fill2="LUC_Absorption")
-dfLUCAbs<-dfLUCAbs%>%group_by_at(vars(-value,-NewValue)) %>% summarize(NewValue = sum(NewValue,na.rm=T))%>%
-  mutate(value=NewValue)%>%as.data.frame
-dfLUCEmit<-dfLUCEmissions%>%filter(NewValue>0)%>%mutate(Fill2="LUC_Emissions")
-dfLUCEmit<-dfLUCEmit%>%group_by_at(vars(-value,-NewValue)) %>% summarize(NewValue = sum(NewValue,na.rm=T))%>%
-  mutate(value=NewValue)%>%as.data.frame
-dfLUC<-rbind.data.frame(dfLUCAbs,dfLUCEmit);head(dfLUC) 
-dfLUC$Title<-unique(df$Title);dfLUC$param<-unique(df$param);head(dfLUC) 
-df<-rbind.data.frame(df,dfLUC)
-# Add Local Data For Comparison
-# Add data for Existing Variables & Years
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",(x==2005 | x==2010))%>%
-  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="R.Delgado_UN",
-         NewValue= case_when((x==2005 & Fill2=="industry")~7.217,
-                             (x==2005 & Fill2=="LUC_Absorption")~-72.576,
-                             (x==2005 & Fill2=="LUC_Emissions")~198.922,
-                             (x==2010 & Fill2=="industry")~7.384,
-                             (x==2010 & Fill2=="LUC_Absorption")~-77.697,
-                             (x==2010 & Fill2=="LUC_Emissions")~187.405,
-                             TRUE ~ NA_real_),
-         value=NewValue);
-# Add new Factors if needed
-dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2005, NewValue=56.873, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2005, NewValue=11.409, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2010, NewValue=73.634, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2010, NewValue=13.124, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2012, NewValue=78.015, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="industry",x=2012, NewValue=8.873, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="LUC_Absorption",x=2012, NewValue=-73.157, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="LUC_Emissions",x=2012, NewValue=158.597, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2012, NewValue=13.313, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-
-# GHG emissions by subsector
-tbl <- getQuery(queryData.proj, "GHG emissions by subsector") # Tibble 
-df<-as.data.frame(tbl); head(df)             # Data frame
-df<-df%>%filter(region==region_i)
-df$technology<-"Technology"
-df$vintage<-paste("Vint_",df$year,sep=""); 
-df$param<-"ghgEmissionByEndUseBySectorByGHG"; head(df) 
-df$Query<-"GHG Emissions"
-df$Title<-"GHG Emissions"
-df<-join(df,GWP%>%dplyr::select(ghg,GWPType),by="ghg");
-df<-join(df,convertGgTgMTC,by="Units");head(df)
-df<-df%>%mutate(NewValue=value*get(GWPType)*Convert)%>%
-  dplyr::select(-c(get(GWPType),Convert))
-df$NewUnits<-"(MTCO2~Eq.)"  # Use ~ for spaces. Will be parsed later
-df$x<-df$year
-df$xLabel<-"Year"
-df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
-df$segment<-df$subsector
-df<-df %>% mutate (Fill1=sector,
-                   FillLabel1="Sector",
-                   FillPalette1="colorsX_Unassigned",
-                   Fill2=ghg,
-                   FillLabel2="GHG",
-                   FillPalette2="colorsX_Unassigned") %>%  
-  subset(.,select=-c(technology,sector,subsector,ghg));
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-dfGHGEndUSeSector<-df
-
-# GHG emissions by GHG CO2, CH4,N2O,HFCs,SF6
-df<-dfGHGEndUSeSector
-df<-df%>%filter(region==region_i)
-df1<-df %>% mutate(Fill2= case_when ((grepl("HFC", Fill2)) ~ "HFCs",
-                                    (grepl("SF6", Fill2)) ~ "SF6",
-                                    (grepl("CO2", Fill2)) ~ "CO2",
-                                    (grepl("N2O", Fill2)) ~ "N2O",
-                                    (grepl("CH4", Fill2)) ~ "CH4",
-                                    TRUE ~ "Other"),
-                   param="ghgEmissByGHGGROUPS");
-# Add in Landuse Emissions
-df1<-df1%>%group_by_at(vars(-value,-NewValue)) %>% summarize(NewValue = sum(NewValue,na.rm=T))%>%
-  mutate(value=NewValue)%>%as.data.frame
-sum(df$NewValue,na.rm=T);sum(df1$NewValue,na.rm=T)
-df<-df1
-# Add Local Data For Comparison
-# Add data for Existing Variables & Years
-dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",(x==2005 | x==2010))%>%
-  dplyr::select(-value,-NewValue,-scenario,-segment,-Fill1,-FillLabel1)%>%unique%>%
-  mutate(scenario="LocalData",
-         Query="R.Delgado_UN",
-         NewValue= case_when((x==2005 & Fill2=="CO2")~201.845,
-                             (x==2005 & Fill2=="CH4")~35,
-                             (x==2005 & Fill2=="N2O")~20,
-                             (x==2005 & Fill2=="HFCs")~1,
-                             (x==2005 & Fill2=="SF6")~5,
-                             (x==2010 & Fill2=="CO2")~203.85,
-                             (x==2010 & Fill2=="CH4")~35,
-                             (x==2010 & Fill2=="N2O")~20,
-                             (x==2010 & Fill2=="HFCs")~2,
-                             (x==2010 & Fill2=="SF6")~2,
-                             TRUE ~ NA_real_),
-         value=NewValue);
-# Add new Factors if needed
-dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="CO2",x=2012, NewValue=185.64, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="CH4",x=2012, NewValue=35, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="N2O",x=2012, NewValue=20, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="HFCs",x=2012, NewValue=2, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="SF6",x=2012, NewValue=2, value=NewValue))
-dfCOL<-dfCOL%>%mutate(Fill1="Fill1",FillLabel1="FillLabel1",segment="segment")
-df<-rbind.data.frame(df,dfCOL)
-df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
-rm(df1)
+df_all<-rbind.data.frame(df_all,df); head(df_all)
 
 #--------------------------
 #--------------------------
 
 # Check a param
-#head(df_allX[df_allX$param=="elecCapRetirements" & df_allX$NewValue>0,])
+#head(df_all[df_all$param=="elecCapRetirements" & df_all$NewValue>0,])
 
 # Limit to selected analysis range and regions
-df_allX<-df_allX[df_allX$x<=max(range(rangeX)),]
-df_allX<-df_allX[df_allX$x>=min(range(rangeX)),]
-
-df_allX<-df_allX%>%filter(region==region_i)
-
+#df_all<-df_all[df_all$x<=max(range(rangeX)),]
+#df_all<-df_all[df_all$x>=min(range(rangeX)),]
 
 #
-df_allOrig<-df_allX
+df_all$scenario<-df_all$scenario%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+df_all$segment<-df_all$segment%>%gsub(" electricity","",.)
+scenariosComp<<-scenariosComp%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+scenariosIndv<<-scenariosIndv%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+head(df_all)
 
-df_allOrig<<-df_allOrig%>%mutate(
-  scenario = case_when ((scenario == scenNameRefOrig) ~ scenNameRef,
-                        (scenario == scenName1Orig) ~ scenName1,
-                        (scenario == scenName2Orig) ~ scenName2,
-                        (scenario == scenName3Orig) ~ scenName3,
-                        TRUE ~ scenario),
-  segment = gsub(" electricity","",segment))
-scenariosComp<<-scenariosComp%>%gsub(paste("\\<",scenNameRefOrig,"\\>",sep=""),scenNameRef,.)%>%
-  gsub(paste("\\<",scenName1Orig,"\\>",sep=""),scenName1,.)%>%
-  gsub(paste("\\<",scenName2Orig,"\\>",sep=""),scenName2,.)%>%
-  gsub(paste("\\<",scenName3Orig,"\\>",sep=""),scenName3,.);
-scenariosIndv<<-scenariosIndv%>%gsub(paste("\\<",scenNameRefOrig,"\\>",sep=""),scenNameRef,.)%>%
-  gsub(paste("\\<",scenName1Orig,"\\>",sep=""),scenName1,.)%>%
-  gsub(paste("\\<",scenName2Orig,"\\>",sep=""),scenName2,.)%>%
-  gsub(paste("\\<",scenName3Orig,"\\>",sep=""),scenName3,.);
-head(df_allOrig)
-
-df_allOrig$scenario<-as.factor(df_allOrig$scenario)
-df_allOrig$scenario <- factor( as.character(df_allOrig$scenario), levels=c(scenNameRef,scenName1,scenName2,scenName3) );
-df_allOrig<-df_allOrig[order(df_allOrig$scenario),];
-df_allOrig<-droplevels(df_allOrig);levels(df_allOrig$scenario)
+df_all$scenario<-as.factor(df_all$scenario)
+df_all$scenario <- factor( as.character(df_all$scenario), levels=c(scenariosComp) );
+df_all<-df_all[order(df_all$scenario),];
 
 
-rm(); gc()
+df_allOrig<-df_all
 
+rm(df_all_finalNrgBySec); gc()
+
+
+#----------
+# Line Charts (df_line)
+#-----------
+
+df_line<-data.frame()
+
+tbl <- getQuery(queryData.proj, "GDP per capita MER by region") # Tibble  # MER is Market Exchange rate
+df<-as.data.frame(tbl);              # Data frame
+df$param<-"gdpPerCapita"; head(df)
+df$Query<-"GDP per capita MER by region"
+df$NewValue<-df$value
+df$NewUnits<-"GDP~per~Capita~(Thousand~1990~USD~per~Person)"  # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df_line<-rbind.data.frame(df_line,df); head(df_line)
+
+tbl <- getQuery(queryData.proj, "GDP MER by region") # Tibble
+df<-as.data.frame(tbl);              # Data frame
+df$param<-"gdp"; head(df) 
+df$Query<-"GDP MER by region"
+df$NewValue<-df$value/1000
+df$NewUnits<-"GDP~(Billion~1990~USD)" # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df_line<-rbind.data.frame(df_line,df); head(df_line)
+
+tbl <- getQuery(queryData.proj, "Population by region") # Tibble
+df<-as.data.frame(tbl);              # Data frame
+df$param<-"pop"; head(df) 
+df$Query<-"Population by region" 
+df$NewValue<- df$value/1000
+df$NewUnits<-"Population~(Millions)" # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df_line<-rbind.data.frame(df_line,df); head(df_line)
+
+#----------
+# Bar Charts (df_bar)
+#-----------
+
+df_bar<-data.frame()
+
+tbl <- getQuery(queryData.proj, "CO2 Emissions") # Tibble
+df<-as.data.frame(tbl);head(df)                 # Data frame
+co2emission<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="co2emission",
+                                    NewValue=value,
+                                    NewUnits="CO2~Emissions~(MTC)", # Use ~ for spaces. Will be parsed later
+                                    Fill=sector,
+                                    FillLabel="Sector",
+                                    FillPalette="enduse_colors") %>%
+  subset(.,select=-c(sector,subsector));
+df_bar<-rbind.data.frame(df_bar,co2emission); head(df_bar)
+
+
+tbl <- getQuery(queryData.proj, "CO2 Emissions by enduse") # Tibble
+df<-as.data.frame(tbl);head(df)                 # Data frame
+co2emissionByEndUse<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="co2emissionByEndUse",
+                                    NewValue=value,
+                                    NewUnits="CO2~Emissions~(MTC)", # Use ~ for spaces. Will be parsed later
+                                    Fill=sector,
+                                    FillLabel="Sector",
+                                    FillPalette="enduse_colors") %>%
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,co2emissionByEndUse); head(df_bar)
+
+
+tbl <- getQuery(queryData.proj, "GHG emissions by subsector") # Tibble
+df<-as.data.frame(tbl);head(df)                 # Data frame
+ghgEmissionByEndUse<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="ghgEmissionByEndUse",
+                                    NewValue=value,
+                                    NewUnits="GHG~Emissions~(Gg)", # Use ~ for spaces. Will be parsed later
+                                    Fill=sector,
+                                    FillLabel="Sector",
+                                    FillPalette="enduse_colors") %>%
+  subset(.,select=-c(sector,subsector));
+df_bar<-rbind.data.frame(df_bar,co2emissionByEndUse); head(df_bar)
+
+
+tbl <- getQuery(queryData.proj, "Total final energy by aggregate end-use sector") # Tibble
+df<-as.data.frame(tbl);head(df)                 # Data frame
+totFinalNrgByEndUse<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="totFinalNrgByEndUse",
+                                    NewValue=value,
+                                    NewUnits="Final~Energy~by~End-Use~Sector~(EJ)", # Use ~ for spaces. Will be parsed later
+                                    Fill=sector,
+                                    FillLabel="Sector",
+                                    FillPalette="enduse_colors") %>%
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,totFinalNrgByEndUse); head(df_bar)
+
+
+tbl <- getQuery(queryData.proj, "primary energy consumption by region (direct equivalent)") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+primNrgConsumByFuel<-df %>% mutate (x=year,
+                                    xLabel="Year",
+                                    param="primNrgConsumByFuel",
+                                    NewValue=value,
+                                    NewUnits="Primary~Energy~Consumption~(EJ)", # Use ~ for spaces. Will be parsed later
+                                    Fill=fuel,
+                                    FillLabel="Fuel",
+                                    FillPalette="colorsX_PAL_pri_ene")%>%
+  subset(.,select=-c(fuel));
+df_bar<-rbind.data.frame(df_bar,primNrgConsumByFuel); head(df_bar)
+
+tbl <- getQuery(queryData.proj, "Electricity generation by aggregate technology") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+elecByTech<-df %>% mutate (x=year,
+                           xLabel="Year",
+                           param="elecByTech",
+                           NewValue=value,
+                           NewUnits="Electricity~Generation~(EJ)", # Use ~ for spaces. Will be parsed later
+                           Fill=technology,
+                           FillLabel="Technology",
+                           FillPalette="colorsX_elec_tech_colors") %>%
+  subset(.,select=-c(technology));
+df_bar<-rbind.data.frame(df_bar,elecByTech); head(df_bar)
+
+tbl <- getQuery(queryData.proj, "water consumption by sector") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+watConsumBySec<-df %>% mutate (x=year,
+                               xLabel="Year",
+                               param="watConsumBySec",
+                               NewValue=value,
+                               NewUnits="Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
+                               Fill=sector,
+                               FillLabel="Sector",
+                               FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,watConsumBySec); head(df_bar)
+unique(watConsumBySec$Fill)
+
+tbl <- getQuery(queryData.proj, "water withdrawals by sector") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+watWithdrawBySec<-df %>% mutate (x=year,
+                                 xLabel="Year",
+                                 param="watWithdrawBySec",
+                                 NewValue=value,
+                                 NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
+                                 Fill=sector,
+                                 FillLabel="Sector",
+                                 FillPalette="colorsX_Unassigned") %>% 
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,watWithdrawBySec); head(df_bar)
+unique(watWithdrawBySec$Fill)
+
+tbl <- getQuery(queryData.proj, "water withdrawals by crop") # Tibble
+df<-as.data.frame(tbl);head(df)                # Data frame
+df<-df[df$sector!="industry" & df$sector!="mining" & df$sector!="municipal" 
+       & df$sector!="electricity" & df$sector!="livestock",]
+watWithdrawByCrop<-df %>% mutate (x=year,
+                                  xLabel="Year",
+                                  param="watWithdrawByCrop",
+                                  NewValue=value,
+                                  NewUnits="Water~Withdrawals~(km^3)", # Use ~ for spaces. Will be parsed later
+                                  Fill=sector,
+                                  FillLabel="Crop",
+                                  FillPalette="colorsX_Unassigned") %>% 
+  subset(.,select=-c(sector));
+df_bar<-rbind.data.frame(df_bar,watWithdrawByCrop); head(df_bar)
+unique(watWithdrawByCrop$Fill)
+
+tbl <- getQuery(queryData.proj, "Ag Production by Crop Type") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+df<-df[df$sector==df$output,]  # So that biomass is not double counted
+agProdByCropBiomass <- df %>% filter(Units=="EJ") %>% 
+  mutate (x=year,
+          xLabel="Year",
+          param="agProdByCropBiomass",
+          NewValue=value,
+          NewUnits="Agricultural~Production~Biomass~(EJ)", # Use ~ for spaces. Will be parsed later
+          Fill=output,
+          FillLabel="Outputs",
+          FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(output,sector));
+df_bar<-rbind.data.frame(df_bar,agProdByCropBiomass); head(df_bar)
+unique(agProdByCropBiomass$Fill)
+
+agProdByForest <- df %>% filter(Units=="billion m3") %>% 
+  mutate (x=year,
+          xLabel="Year",
+          param="agProdByCropForest",
+          NewValue=value,
+          NewUnits="Agricultural~Production~Forest~(billion~m^3)", # Use ~ for spaces. Will be parsed later
+          Fill=output,
+          FillLabel="Outputs",
+          FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(output,sector));
+df_bar<-rbind.data.frame(df_bar,agProdByForest); head(df_bar)
+unique(agProdByForest$Fill)
+
+agProdByCrop <- df %>% filter(Units=="Mt") %>% 
+  mutate (x=year,
+          xLabel="Year",
+          param="agProdByCrop",
+          NewValue=value,
+          NewUnits="Agricultural~Production~Crop~(Mt)", # Use ~ for spaces. Will be parsed later
+          Fill=output,
+          FillLabel="Outputs",
+          FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(output,sector));
+df_bar<-rbind.data.frame(df_bar,agProdByCrop); head(df_bar)
+unique(agProdByCrop$Fill)
+
+
+tbl <- getQuery(queryData.proj, "water withdrawals by water mapping source") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
+df$input<-gsub("water_td_irr_","",df$input);
+df$input<-gsub("_W","",df$input);head(df)
+wwIrrBasin<-df %>% mutate (x=year,
+                           xLabel="Year",
+                           param="irrWatWithBasin",
+                           NewValue=value,
+                           NewUnits="Irrigation~Water~Withdrawal~(km^3)", # Use ~ for spaces. Will be parsed later
+                           Fill=input,
+                           FillLabel="Basin",
+                           FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(input));
+df_bar<-rbind.data.frame(df_bar,wwIrrBasin); head(df_bar)
+unique(wwIrrBasin$Fill)
+
+
+tbl <- getQuery(queryData.proj, "water consumption by water mapping source") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+df<-df[grepl("_irr_",df$input),]  # Only keep irrigation water items
+df$input<-gsub("water_td_irr_","",df$input);
+df$input<-gsub("_C","",df$input);head(df)
+wcIrrBasin<-df %>% mutate (x=year,
+                           xLabel="Year",
+                           param="irrWatConsBasin",
+                           NewValue=value,
+                           NewUnits="Irrigation~Water~Consumption~(km^3)", # Use ~ for spaces. Will be parsed later
+                           Fill=input,
+                           FillLabel="Basin",
+                           FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(input));
+df_bar<-rbind.data.frame(df_bar,wcIrrBasin); head(df_bar)
+unique(wcIrrBasin$Fill)
+
+tbl <- getQuery(queryData.proj, "aggregated land allocation") # Tibble
+df<-as.data.frame(tbl);head(df)              # Data frame
+landAll<-df %>% mutate (x=year,
+                        xLabel="Year",
+                        param="aggLandAlloc",
+                        NewValue=value,
+                        NewUnits="Land~Allocation~(km^2)", # Use ~ for spaces. Will be parsed later
+                        Fill=landleaf,
+                        FillLabel="Type",
+                        FillPalette="colorsX_Unassigned") %>%
+  subset(.,select=-c(landleaf));
+df_bar<-rbind.data.frame(df_bar,landAll); head(df_bar)
+unique(landAll$Fill)
+
+#------------------
+# Limit to selected analysis range
+df_line<-df_line[df_line$x<=max(range(rangeX)),]
+df_bar<-df_bar[df_bar$x<=max(range(rangeX)),]
+
+df_line<-df_line%>%filter(region==region_i)
+df_bar<-df_bar%>%filter(region==region_i)
 
 # Automatic Selection of all parameters
-params<-unique(df_allOrig$param); # List of all params
-params
-}
+unique(df_line$param);unique(df_bar$param) # List of all params
+params<-c(unique(df_line$param),unique(df_bar$param))  # For all Parameters
+
+
+# Rename scenarios with new names
+df_line$scenario<-df_line$scenario%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+#df_line$segment<-df_line$segment%>%gsub(" electricity","",.)
+scenariosComp<<-scenariosComp%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+scenariosIndv<<-scenariosIndv%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+head(df_line)
+df_line$scenario<-as.factor(df_line$scenario)
+df_line$scenario <- factor( as.character(df_line$scenario), levels=c(scenariosComp) );
+df_line<-df_line[order(df_line$scenario),];
+df_lineOrig<-df_line
+
+# Rename scenarios with new names
+df_bar$scenario<-df_bar$scenario%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+#df_bar$segment<-df_bar$segment%>%gsub(" electricity","",.)
+scenariosComp<<-scenariosComp%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+scenariosIndv<<-scenariosIndv%>%gsub(scenNameRefOrig,scenNameRef,.)%>%
+  gsub(scenName1Orig,scenName1,.)%>%gsub(scenName2Orig,scenName2,.)%>%gsub(scenName3Orig,scenName3,.);
+head(df_bar)
+df_bar$scenario<-as.factor(df_bar$scenario)
+df_bar$scenario <- factor( as.character(df_bar$scenario), levels=c(scenariosComp) );
+df_bar<-df_bar[order(df_bar$scenario),];
+df_barOrig<-df_bar
+
+rm(lty3,ltz1,ltz,lty2,lty1,
+   df_line_elecCap,df_line_elecCapInvestCum,df_line_elecCapRetireCum,
+   df_line_elecCapRetire,ltz2,ncx,df_line_elecGenbyVerSeg,
+   jx,dfx,jy,df,
+   #df_line_elecCapCum,df_line_elecProd,df_line_elecCapFac,
+   df_line_capFacbyHorSeg); gc()
+
 
 #----------------
 
@@ -2362,124 +1991,77 @@ if(!dir.exists(paste(wdfigsOut,"/",region_i,"/DiffPlots",sep=""))){dir.create(pa
 dir<-paste(wdfigsOut,"/",region_i,"/DiffPlots",sep="")
 
 
-  for(paramx in paramsDiff){
+  for(param in params){
     
     
-    df_all<-df_allOrig
-    
+    df_line<-df_lineOrig
+    df_bar<-df_barOrig
     #----------
     # Line Charts
     #-----------    
-  
-    l1<-df_all%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits)  # For National, by techs
-    l1<-l1%>%filter(param==paramx & region==region_i); head(l1)
-  
-    l1$scenario<-as.factor(l1$scenario)
-    l1$scenario <- factor( as.character(l1$scenario), levels=c(scenariosComp) );
-    l1<-l1[order(l1$scenario),];
     
+    l1<-df_line[(df_line$param==param & df_line$region==region_i),]; head(l1)
     
     if(nrow(l1)!=0){
       
-      if(nrow(l1[l1$Aggregate=="sum",])>0){xsum<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="sum",]), sum, na.rm=TRUE)}else{xsum<-data.frame()}
-      if(nrow(l1[l1$Aggregate=="mean",])>0){xmean<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="mean",]), mean, na.rm=TRUE)}else{xmean<-data.frame()}
-      l1<-rbind.data.frame(xsum,xmean);head(l1)
-      
-      
-       p <- fig_LineCompareScenario(l1) + if(titleOn==1){ggtitle (paste(unique(l1$Title)," ","National US ",NumStates," States"," ",scenario_i,sep=""))}else{ggtitle(NULL)} 
-      plot(p)
-      
-      fname<-paste(paramx,"_LinesComp_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-      print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.2,figHeight_InchMaster*1.2,pdfpng=pdfpng)
-      
-      
-    } # Close if empty rows 
+      fname<-paste("lineComp_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        p <- fig_LineCompareScenario(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)}  
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*0.7,figHeight_InchMaster,pdfpng=pdfpng)
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue));head(t1)
+        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
+        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
+        t1<-t1%>%spread(scenario,NewValue)
+        write.csv(t1,file=paste(dir,"/tableComp_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}  
+    }
     
     
     #----------
     # Bar Charts
     #-----------
     
-    l1<-df_all
-    # Choose Fill1, FillLabel1, FillPalette1 for technologies or 2 for subsector
-    l1$Fill<-l1$Fill2;
-    l1$FillLabel<-l1$FillLabel2 
-    l1$FillPalette<-l1$FillPalette2
-    l1<-l1%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits,
-                           Fill,FillLabel,FillPalette)  # For National, by techs
-    l1<-l1%>%filter(param==paramx); head(l1)
+    l1<-df_bar[(df_bar$param==param & df_bar$region==region_i),]; head(l1)
     
     if(nrow(l1)!=0){
       
-      if(nrow(l1[l1$Aggregate=="sum",])>0){xsum<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="sum",]), sum, na.rm=TRUE)}else{xsum<-data.frame()}
-      if(nrow(l1[l1$Aggregate=="mean",])>0){xmean<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="mean",]), mean, na.rm=TRUE)}else{xmean<-data.frame()}
-      l1<-rbind.data.frame(xsum,xmean);head(l1)
-      l1$Fill<-as.factor(l1$Fill);l1<-droplevels(l1);head(l1)
+      l1_sum<-aggregate(NewValue ~ Units+scenario+region+year+param+NewUnits, l1, sum) # To get sums over years
       
-      
-      l1$scenario<-as.factor(l1$scenario)
-      l1$scenario <- factor( as.character(l1$scenario), levels=c(scenariosComp) );
-      l1<-l1[order(l1$scenario),];
-      
-      
-      p <- fig_Bar(l1) + facet_wrap(~scenario)
-      plot(p)
-      fname<-paste(paramx,"_BarComp_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-      print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.2,figHeight_InchMaster*1,pdfpng=pdfpng)
-      
-      fname<-paste(paramx,"_barDodgeTotal_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-      p <- fig_BarDodgeScenario(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-      plot(p)
-      print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster,figHeight_InchMaster,pdfpng=pdfpng)
-      
-      p <- fig_LineMultiple(l1) + facet_wrap(~scenario)
-      plot(p)
-      fname<-paste(paramx,"_LinesFacetComp_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-      print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.2,figHeight_InchMaster*1.2,pdfpng=pdfpng)
-      
-      
-        t1<-subset(l1,select=c(scenario,region,x,NewUnits,NewValue,Fill));head(t1)
+      fname<-paste("barComp_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+        p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
+        p <- p + facet_grid(~scenario)
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
+        
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue,Fill));head(t1)
         t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
-        t1<-dcast(t1,Fill+region+x+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
+        t1<-dcast(t1,Fill+region+year+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
         colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
-        colnames(t1)[which(names(t1) == "x")] <- "Year"
-        write.csv(t1,file=paste(dir,"/",paramx,"_tableComp_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
-        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-        tref<-t1%>%dplyr::select(region,Year,Parameter,Fill,scenNameRef)
+        write.csv(t1,file=paste(dir,"/tableComp_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
       
     }
+    
+    
     
     #----------
     # Bar Charts Diff
     #-----------
     
-    l1<-df_all[(df_all$param==paramx),];head(l1)
-    # Choose Fill1, FillLabel1, FillPalette1 for technologies or 2 for subsector
-    l1$Fill<-l1$Fill2;
-    l1$FillLabel<-l1$FillLabel2 
-    l1$FillPalette<-l1$FillPalette2
-    l1<-l1%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits,
-                           Fill,FillLabel,FillPalette)  # For National, by techs
-    head(l1)
-    
+    l1<-df_bar[(df_bar$param==param & df_bar$region==region_i),]; head(l1)
     
     if(nrow(l1)!=0){
       
-      if(nrow(l1[l1$Aggregate=="sum",])>0){xsum<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="sum",]), sum, na.rm=TRUE)}else{xsum<-data.frame()}
-      if(nrow(l1[l1$Aggregate=="mean",])>0){xmean<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="mean",]), mean, na.rm=TRUE)}else{xmean<-data.frame()}
-      l1<-rbind.data.frame(xsum,xmean);head(l1)
-      l1$Fill<-as.factor(l1$Fill);l1<-droplevels(l1);head(l1)
-      
-      
-      lx<-l1%>%spread(scenario,NewValue)#%>%replace(is.na(.), 0)
-      if(scenName1 %in% unique(l1$scenario)){lx<-lx%>%  
-        mutate(!!paste(scenName1,"_diff",sep=""):=get(scenName1)-get(scenNameRef))%>%dplyr::select(-c(scenName1))}
-      if(scenName2 %in% unique(l1$scenario)){lx<-lx%>%
+      lx<-l1%>%dplyr::select(-c(Units,value))%>%spread(scenario,NewValue)%>%replace(is.na(.), 0)%>%
+        mutate(!!paste(scenName1,"_diff",sep=""):=get(scenName1)-get(scenNameRef))%>%dplyr::select(-c(scenName1))
+      if(length(scenariosComp)>2){lx<-lx%>%
         mutate(!!paste(scenName2,"_diff",sep=""):=get(scenName2)-get(scenNameRef))%>%dplyr::select(-c(scenName2))}
-      if(scenName3 %in% unique(l1$scenario)){lx<-lx%>%
+      if(length(scenariosComp)>3){lx<-lx%>%
         mutate(!!paste(scenName3,"_diff",sep=""):=get(scenName3)-get(scenNameRef))%>%dplyr::select(-c(scenName3))}
-      lx<-lx%>%gather(key=scenario,value=NewValue,-param,-region,
-               -x,-xLabel,-Aggregate,-NewUnits,-Fill,-FillLabel,-FillPalette);head(lx)
+      lx<-lx%>%gather(key=scenario,value=NewValue,-param,-region,-year,
+               -x,-xLabel,-NewUnits,-Fill,-FillLabel,-FillPalette);head(lx)
       
       lx$scenario<-lx$scenario%>%gsub("_diff","",.);head(lx)
       lx<-lx%>%filter(scenario != scenNameRef);lx<-droplevels(lx)
@@ -2488,150 +2070,24 @@ dir<-paste(wdfigsOut,"/",region_i,"/DiffPlots",sep="")
       lx$scenario <- factor( as.character(lx$scenario), levels=c(scenariosComp) );
       lx<-lx[order(lx$scenario),];
       
-      l2<-lx
+      l1<-lx
       
-      fname<-paste(paramx,"_barDiff_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+      fname<-paste("barDiff_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        p <- fig_Bar(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
+        p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
         p <- p+ facet_grid(~scenario)
         plot(p)
         print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
         
-      fname<-paste(paramx,"_linesDiff_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-          p <- fig_LineMultiple(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p+ facet_grid(~scenario)
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
-          
-      fname<-paste(paramx,"_barDiffDodgeFacetFillFree_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-          p <- fig_BarDodgeScenario(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p + facet_wrap(~Fill,scales="free_y")
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster*1.5,pdfpng=pdfpng)
-          
-     fname<-paste(paramx,"_barDiffDodgeFacetFill_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-          p <- fig_BarDodgeScenario(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p + facet_wrap(~Fill)
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster*1.5,pdfpng=pdfpng)
-          
-          
-      l3<-l2  
-      l3<-l3%>%dplyr::select(-Fill,-FillLabel,-FillPalette)%>%group_by_at(vars(-NewValue)) %>% summarize(NewValue = sum(NewValue,na.rm=T))
-      fname<-paste(paramx,"_barDiffDodgeTotal_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-          p <- fig_BarDodgeScenario(l3) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p + scale_fill_manual(values=colorsX_Basic[2:length(colorsX_Basic)],name="Scenario")
-          p <- p
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
-          
-        
-        t1<-subset(l2,select=c(scenario,region,x,NewUnits,NewValue,Fill));head(t1)
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue,Fill));head(t1)
         t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
-        t1<-dcast(t1,Fill+region+x+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
+        t1<-dcast(t1,Fill+region+year+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
         colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
-        colnames(t1)[which(names(t1) == "x")] <- "Year"
-        t1<-join(t1,tref);head(t1)
-        colnames(t1)[which(names(t1) == scenNameRef)] <- paste(scenNameRef,"_Value",sep="")
-        write.csv(t1,file=paste(dir,"/",paramx,"_tableDiff_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        write.csv(t1,file=paste(dir,"/tableDiff_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
         selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-        
       
-      } # close if selected params
-    }# If nrow
-    
-    
-    #----------
-    # Bar Charts Prcnt
-    #-----------
-    
-    l1<-df_all[(df_all$param==paramx),];head(l1)
-    # Choose Fill1, FillLabel1, FillPalette1 for technologies or 2 for subsector
-    l1$Fill<-l1$Fill2;
-    l1$FillLabel<-l1$FillLabel2 
-    l1$FillPalette<-l1$FillPalette2
-    l1<-l1%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits,
-                           Fill,FillLabel,FillPalette)  # For National, by techs
-    head(l1)
-    
-    
-    if(nrow(l1)!=0){
-      
-      
-      if(nrow(l1[l1$Aggregate=="sum",])>0){xsum<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="sum",]), sum, na.rm=TRUE)}else{xsum<-data.frame()}
-      if(nrow(l1[l1$Aggregate=="mean",])>0){xmean<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="mean",]), mean, na.rm=TRUE)}else{xmean<-data.frame()}
-      l1<-rbind.data.frame(xsum,xmean);head(l1)
-      l1$Fill<-as.factor(l1$Fill);l1<-droplevels(l1);head(l1)
-      
-      
-      lx<-l1%>%spread(scenario,NewValue)#%>%replace(is.na(.), 0)
-      if(scenName1 %in% unique(l1$scenario)){lx<-lx%>%   
-        mutate(!!paste(scenName1,"_prcnt",sep=""):=((get(scenName1)-get(scenNameRef))*100/get(scenNameRef)))%>%dplyr::select(-c(scenName1))}
-      if(scenName2 %in% unique(l1$scenario)){lx<-lx%>% 
-        mutate(!!paste(scenName2,"_prcnt",sep=""):=((get(scenName2)-get(scenNameRef))*100/get(scenNameRef)))%>%dplyr::select(-c(scenName2))}
-      if(scenName3 %in% unique(l1$scenario)){lx<-lx%>% 
-        mutate(!!paste(scenName3,"_prcnt",sep=""):=((get(scenName3)-get(scenNameRef))*100/get(scenNameRef)))%>%dplyr::select(-c(scenName3))}
-      lx<-lx%>%gather(key=scenario,value=NewValue,-param,-region,
-                      -x,-xLabel,-Aggregate,-NewUnits,-Fill,-FillLabel,-FillPalette);head(lx)
-      
-      lx$scenario<-lx$scenario%>%gsub("_prcnt","",.);head(lx)
-      lx<-lx%>%filter(scenario != scenNameRef);lx<-droplevels(lx)
-      
-      lx$scenario<-as.factor(lx$scenario)
-      lx$scenario <- factor( as.character(lx$scenario), levels=c(scenariosComp) );
-      lx<-lx[order(lx$scenario),];
-      
-      l2<-lx
-      
-      fname<-paste(paramx,"_barDiffPrcnt_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        p <- fig_Bar(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-        p <- p+ facet_grid(~scenario) +  ylab("% Difference")
-        plot(p)
-        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
-        
-      fname<-paste(paramx,"_LinesDiffPrcnt_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-          p <- fig_LineMultiple(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p+ facet_grid(~scenario) +  ylab("% Difference")
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
-
-          
-      fname<-paste(paramx,"_barDiffPrcntDodgeFacetFillFree_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-          p <- fig_BarDodgeScenario(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p + facet_wrap(~Fill,scales="free_y") + ylab("% Difference")
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster*1.5,pdfpng=pdfpng)
-          
-      fname<-paste(paramx,"_barDiffPrcntDodgeFacetFill_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-          p <- fig_BarDodgeScenario(l2) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p + facet_wrap(~Fill) + ylab("% Difference")
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster*1.5,pdfpng=pdfpng)
-        
-      l3<-l2  
-      l3<-l3%>%dplyr::select(-Fill,-FillLabel,-FillPalette)%>%group_by_at(vars(-NewValue)) %>% summarize(NewValue = sum(NewValue,na.rm=T))
-      fname<-paste(paramx,"_barDiffPrcntDodgeTotal_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")  
-          p <- fig_BarDodgeScenario(l3) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          p <- p + ylab("% Difference")
-          p <- p + scale_fill_manual(values=colorsX_Basic[2:length(colorsX_Basic)],name="Scenario")
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*1.5,figHeight_InchMaster,pdfpng=pdfpng)
-        
-        t1<-subset(l2,select=c(scenario,region,x,NewUnits,NewValue,Fill));head(t1)
-        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
-        t1<-dcast(t1,Fill+region+x+NewUnits~scenario,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
-        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
-        colnames(t1)[which(names(t1) == "x")] <- "Year"
-        t1<-join(t1,tref);head(t1)
-        colnames(t1)[which(names(t1) == scenNameRef)] <- paste(scenNameRef,"_Value",sep="")
-        t1$Paramter<-"Percentage Difference"
-        write.csv(t1,file=paste(dir,"/",paramx,"_tableDiffPrcnt_GCAM_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
-        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-        
       }
     }
-    
       
   } # Close Params
  
@@ -2646,12 +2102,11 @@ dir<-paste(wdfigsOut,"/",region_i,"/DiffPlots",sep="")
 
 for(scenario_i in scenariosIndv){
   
-  scenario_ix<-case_when(scenario_i==scenNameRef~scenNameRefOrig,
-                         scenario_i==scenName1~scenName1Orig,
-                         scenario_i==scenName2~scenName2Orig,
-                         scenario_i==scenName3~scenName3Orig); scenario_ix
-  
- 
+  df_line<-df_lineOrig
+  df_bar<-df_barOrig
+  df_line<-df_line%>%filter(scenario==scenario_i)
+  df_bar<-df_bar%>%filter(scenario==scenario_i)
+    
 # Create Folders
 if(!dir.exists(paste(wdfigsOut,"/",region_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,sep=""))}
 if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,sep=""))}
@@ -2682,101 +2137,62 @@ dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,sep="")
     #______________________
     
     
-    for(paramx in params){
+    for(param in params){
      
-      df_all<-df_allOrig%>%filter(scenario==scenario_i)
-      
-      #----------
-      # Line Charts
-      #-----------    
-      
-      l1<-df_all%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits,Fill1)  # For National, by techs
-      l1<-l1%>%filter(param==paramx & region==region_i); head(l1)
-      
-      if(nrow(l1)!=0){
+        #----------
+        # Line Charts
+        #-----------    
         
-        if(nrow(l1[l1$Aggregate=="sum",])>0){xsum<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="sum",]), sum, na.rm=TRUE)}else{xsum<-data.frame()}
-        if(nrow(l1[l1$Aggregate=="mean",])>0){xmean<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="mean",]), mean, na.rm=TRUE)}else{xmean<-data.frame()}
-        l1<-rbind.data.frame(xsum,xmean);head(l1)
+        l1<-df_line[(df_line$param==param & df_line$region==region_i),]; head(l1)
         
-        
-        fname<-paste("line_GCAM_",paramx,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+        if(nrow(l1)!=0){
+          
+        fname<-paste("line_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          p <- fig_LineSingle(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)}  
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*0.7,figHeight_InchMaster,pdfpng=pdfpng)
-          t1<-subset(l1,select=c(scenario,region,x,NewUnits,NewValue));head(t1)
-          t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
-          colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
-          colnames(t1)[which(names(t1) == "x")] <- "Year"
-          write.csv(t1,file=paste(dir,"/table_GCAM_",region_i,"_",paramx,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
-          selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))  
-      }
+        p <- fig_LineSingle(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)}  
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster*0.7,figHeight_InchMaster,pdfpng=pdfpng)
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue));head(t1)
+        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
+        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
+        write.csv(t1,file=paste(dir,"/table_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}  
+        }
         
-      } # Close if empty rows 
-      
-      
-      #----------
-      # Bar Charts
-      #-----------
-      
-      l1<-df_all
-      # Choose Fill1, FillLabel1, FillPalette1 for technologies or 2 for subsector
-      l1$Fill<-l1$Fill2;
-      l1$FillLabel<-l1$FillLabel2 
-      l1$FillPalette<-l1$FillPalette2
-      l1<-l1%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits,
-                             Fill,FillLabel,FillPalette)  # For National, by techs
-      l1<-l1%>%filter(param==paramx); head(l1)
-      
-      if(nrow(l1)!=0){
         
-        if(nrow(l1[l1$Aggregate=="sum",])>0){xsum<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="sum",]), sum, na.rm=TRUE)}else{xsum<-data.frame()}
-        if(nrow(l1[l1$Aggregate=="mean",])>0){xmean<-aggregate(NewValue~., data=subset(l1[l1$Aggregate=="mean",]), mean, na.rm=TRUE)}else{xmean<-data.frame()}
-        l1<-rbind.data.frame(xsum,xmean);head(l1)
-        l1$Fill<-as.factor(l1$Fill);l1<-droplevels(l1);head(l1)
+        #----------
+        # Bar Charts
+        #-----------
+        
+        l1<-df_bar[(df_bar$param==param & df_bar$region==region_i),]; head(l1)
+        
+        if(nrow(l1)!=0){
           
-      
-        fname<-paste("bar_GCAM_",paramx,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
+        l1_sum<-aggregate(NewValue ~ Units+scenario+region+year+param+NewUnits, l1, sum) # To get sums over years
+          
+        fname<-paste("bar_GCAM_",param,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster,figHeight_InchMaster,pdfpng=pdfpng)
-          
-        fname<-paste("linesMulti_GCAM_",paramx,"_",region_i,"_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
-          p <- fig_LineMultiple(l1)
-          plot(p)
-          print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster,figHeight_InchMaster,pdfpng=pdfpng)
-          
-          t1<-subset(l1,select=c(scenario,region,x,NewUnits,NewValue,Fill));head(t1)
-          t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
-          t1<-dcast(t1,scenario+region+x+NewUnits~Fill,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
-          colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
-          colnames(t1)[which(names(t1) == "x")] <- "Year"
-          write.csv(t1,file=paste(dir,"/table_GCAM_",region_i,"_",paramx,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
-          selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
+        p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
+        plot(p)
+        print_PDFPNG(p,dir=dir,filename=fname,figWidth_InchMaster,figHeight_InchMaster,pdfpng=pdfpng)
         
-      }# if nrow 0
-      
-      
-
+        t1<-subset(l1,select=c(scenario,region,year,NewUnits,NewValue,Fill));head(t1)
+        t1$NewUnits<-t1$NewUnits%>%gsub("~"," ",.)%>%gsub("\\^","",.);head(t1)
+        t1<-dcast(t1,scenario+region+year+NewUnits~Fill,value.var="NewValue",fun.aggregate=sum,na.rm=T);head(t1)
+        colnames(t1)[which(names(t1) == "NewUnits")] <- "Parameter"
+        write.csv(t1,file=paste(dir,"/table_GCAM_",region_i,"_",param,"_",min(range(l1$x)),"to",max(range(l1$x)),".csv",sep=""),row.names=F)
+        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
+        
+        }
+        
     } #Close GCAM params
  
 # Special plots for particular presentations
-if(FALSE) {
-  
-  df_all<-df_allOrig
-  
-  df_all<-df_allOrig%>%filter(scenario==scenario_i)
-  l1<-df_all
+if(TRUE) {
   
   # For plotting Final & Primary Energy on same scale
   param<-"primNrgConsumByFuel"
-  l1<-df_all[(df_all$param==param),]; head(l1)
-  # Choose Fill1, FillLabel1, FillPalette1 for technologies or 2 for subsector
-  l1$Fill<-l1$Fill2;
-  l1$FillLabel<-l1$FillLabel2 
-  l1$FillPalette<-l1$FillPalette2
+  l1<-df_bar[(df_bar$param==param & df_bar$region==region_i),]; head(l1)
   l1_sum<-aggregate(NewValue ~ Units+scenario+region+year+param+NewUnits, l1, sum) # To get sums over years
   p <- fig_Bar(l1) + if(titleOn==1){ggtitle (paste(region_i,sep=""))}else{ggtitle(NULL)} 
   p <- p + coord_cartesian(ylim=c(0,signif(max(l1_sum$NewValue)*1.1,0)))
@@ -3077,17 +2493,15 @@ if(runXanthosMaps==1){
 #________________________________________________________________________________
 
 if(runScarcity==1){
-  
-  
+
   # Create Output Directory
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))}
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Scarcity",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Scarcity",sep=""))}
-  dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Scarcity",sep="")
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Scarcity/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Scarcity/subBasin",sep=""))}
+  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Scarcity",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Scarcity",sep=""))}
+  dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Scarcity",sep="")
+  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Scarcity/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/Scarcity/subBasin",sep=""))}
 
 
   # Tethys Data
-  wdtethys1<-paste(wdtethys,scenario_ix,sep="") # Tethys data directory
+  wdtethys1<-paste(wdtethys,scenario_i,sep="") # Tethys data directory
   df<-data.frame()
   # Read in Data Files
   df_dom <- read.csv(paste(wdtethys1,"/wddom.csv",sep=""), stringsAsFactors = F)
@@ -3126,7 +2540,7 @@ if(runScarcity==1){
   names(xanthosCoords)<-c("lon","lat")
   df<-data.frame()
   # Read in Data Files
-  df_q <- read.csv(paste(wdXanthos1,scenario_ix,"/q_bced_1960_1999_ipsl-cm5a-lr_1950_2005.csv",sep=""), header=F, stringsAsFactors = F)
+  df_q <- read.csv(paste(wdXanthos1,scenario_i,"/q_bced_1960_1999_ipsl-cm5a-lr_1950_2005.csv",sep=""), header=F, stringsAsFactors = F)
   names(df_q)<-paste("X",c(1950:2005),sep=""); head(df_q)
   df_q$Type<-paste("Runoff",sep="");df_q<-cbind.data.frame(xanthosCoords,df_q); df<-rbind.data.frame(df,df_q);
   head(df)
@@ -3138,7 +2552,6 @@ if(runScarcity==1){
   names(df)<-gsub("x","X",names(df),ignore.case=F)
   head(df)
   dfxanthos<-df;
-
   
 head(dftethys);head(dfxanthos);nrow(dftethys);nrow(dfxanthos)
 
@@ -3172,201 +2585,12 @@ moduleTitleText<- "Water Scarcity"  # Title for figures. Used when titleOn is 1
 moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
 moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
 
-maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
+maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
                  moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
                  moduleTitleText=moduleTitleText,moduleAggType=moduleAggType,
                  moduleRemove=moduleRemove)
-
 
 } # Close Scarcity Run
-
-
-#------------------------------
-#--- Xanthos Impacts Scenarios
-#------------------------------  
-
-#---------------------
-# Create Output Directory
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))}
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts",sep=""))}
-dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts",sep="")
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts/subBasin",sep=""))}
-
-
-# Tethys Data
-wdtethys1<-paste(wdtethys,scenario_ix,sep="") # Tethys data directory
-df<-data.frame()
-# Read in Data Files
-df_dom <- read.csv(paste(wdtethys1,"/wddom.csv",sep=""), stringsAsFactors = F)
-df_dom$Type<-"Domestic"; df<-rbind.data.frame(df,df_dom);
-df_elec <- read.csv(paste(wdtethys1,"/wdelec.csv",sep=""), stringsAsFactors = F)
-df_elec$Type<-"Electric"; df<-rbind.data.frame(df,df_elec);
-df_irr <- read.csv(paste(wdtethys1,"/wdirr.csv",sep=""), stringsAsFactors = F)
-df_irr$Type<-"Irrigation"; df<-rbind.data.frame(df,df_irr);
-df_liv <- read.csv(paste(wdtethys1,"/wdliv.csv",sep=""), stringsAsFactors = F)
-df_liv$Type<-"Livestock"; df<-rbind.data.frame(df,df_liv);
-df_mfg <- read.csv(paste(wdtethys1,"/wdmfg.csv",sep=""), stringsAsFactors = F)
-df_mfg$Type<-"MFG"; df<-rbind.data.frame(df,df_mfg);
-df_min <- read.csv(paste(wdtethys1,"/wdmin.csv",sep=""), stringsAsFactors = F)
-df_min$Type<-"Mining"; df<-rbind.data.frame(df,df_min);
-df_noag <- read.csv(paste(wdtethys1,"/wdnonag.csv",sep=""), stringsAsFactors = F)
-df_noag$Type<-"Non_Agriculture"; df<-rbind.data.frame(df,df_noag);
-df_total <- read.csv(paste(wdtethys1,"/wdtotal.csv",sep=""), stringsAsFactors = F)
-df_total$Type<-"Total";df<-rbind.data.frame(df,df_total);
-head(df)
-colnames(df)[which(names(df) == "latitude")] <- "lat"
-colnames(df)[which(names(df) == "longitude")] <- "lon"
-names(df)<-gsub("x","X",names(df),ignore.case=F)
-head(df)
-df<-df%>%dplyr::select(lat,lon,yearsX,Type)
-years_tethys<-grep("X",names(df),value=T)[grep("X",names(df),value=T)!="X..ID"];years_tethys
-years_tethysX<-sub("X","",years_tethys);years_tethysX
-df$Mean<-rowMeans(df%>%dplyr::select(years_tethys))
-colnames(df)[which(names(df) == "Mean")] <- paste("Mean_",min(years_tethysX),"to",max(years_tethysX),sep="")
-head(df)
-dftethys<-df  
-
-# Xanthos Scenarios RCP 6
-df<-data.frame()
-for(i in c("noresm1-m","ipsl-cm5a-lr","miroc-esm-chem","gfdl-esm2m","hadgem2-es")){
-  df_q1 <- read.csv(paste(wdXanthosRuns,"/pm_abcd_mrtm_",i,"_rcp6p0_1950_2099/q_km3peryear_pm_abcd_mrtm_",i,"_rcp6p0_1950_2099.csv",sep=""), header=T, stringsAsFactors = F);head(df_q1)
-  df_q1<-df_q1%>%mutate(Type=paste("Runoff",sep=""),latitude=xanthosCoords$lat,longitude=xanthosCoords$lon,
-                        scenario=i);
-  df<-rbind.data.frame(df,df_q1);tail(df)
-}
-a<-gsub("X","",names(df%>%dplyr::select(-id,-Type,-latitude,-longitude,-scenario)))%>%as.character%>%as.numeric
-min(a);max(a)
-df1<-df%>%mutate(Mean=rowMeans(df%>%dplyr::select(-id,-Type,-latitude,-longitude,-scenario)));
-colnames(df1)[which(names(df1) == "Mean")] <- paste("Mean_",min(a),"to",max(a),sep="")
-dfxanthosImpacts<-df1
-
-#--------------------
-# Create Impacts Sceario Figures
-#--------------------
-# Crop to region
-df<-dfxanthosImpacts
-# Gridded Boundary
-df1<-df%>%mutate(lat=latitude,lon=longitude)%>%dplyr::select(-id,-longitude,-latitude,-Type)
-
-
-# Convert to Spatial Point Data Frames
-df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
-proj4string(df1)<-projX
-
-# Crop to the Regional file shpa boundary
-df2<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
-dfxtra<<-raster::intersect(df1,b1);plot(dfxtra) #create larger boundary extents for plotting in tmap
-gridded(dfxtra)<-TRUE
-df3<-df2
-gridded(df3)<-TRUE # Create Gridded Data
-dfxtra<<-dfxtra
-
-years<-c("X2010","X2020","X2030","X2040");
-dfx<-df3
-dfx@data<-dfx@data%>%dplyr::select(years,scenario)%>%filter(scenario=="noresm1-m") # Choose the years
-dfx@data<-dfx@data%>%dplyr::select(-scenario)  # Remove mean year
-
-colx<<-colorsAbsolute #------Choose color palette
-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)+m8
-
-
-
-
-fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
-if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-  map<-mapX_raster(rasterBoundary=dfxtra,data=dfxa,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
-    if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
-  map
-  print_PDFPNG(map,dir=dir,filename=fname,
-               figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-  selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-  if(animationsOn==1){
-    fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE.gif",sep="")
-    if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                      filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
-      animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
-                      filename=fname,width=NA,height=NA,delay=delay)
-      print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
-                   dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-      selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-  }
-}
-
-##ZTEST    
-# KMEANS
-if(sd(as.matrix(dfCommonScaleYears))!=0){
-  fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
-  if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-    map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
-      if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
-    map
-    print_PDFPNG(map,dir=dir,filename=fname,
-                 figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-    selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-    #---- Animation File
-    if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE.gif",sep="")
-      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                        filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
-        animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
-                        filename=fname,width=NA,height=NA,delay=delay)
-        print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
-                     dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-    }
-  }
-}
-
-
-# Figure National Mean Runoff by scneario and Year (Line chart)
-
-#dfq1Nat<-dfq1%>%dplyr::select(-latitude,longitude)
-
-# Figure Mean 1950- by scenario (Maps)
-
-
-
-head(dftethys);head(dfxanthos);head(dfxanthosImpacts);nrow(dftethys);nrow(dfxanthos)
-
-
-# Scarcity Data frame
-dfsX<-join(dftethys,dfxanthos%>%dplyr::select(lat,lon,grep("Mean",names(dfxanthos),value=T)),by=c("lat","lon"))
-ns<-grep("X|Mean",names(dftethys),value=T)[!grepl("X..ID",grep("X|Mean",names(dftethys),value=T))] 
-ns # columns for scarcity
-xanthosDivider<-dfsX%>%dplyr::select(grep("Mean",names(dfxanthos),value=T)); head(xanthosDivider)
-dfs<-cbind.data.frame(dfsX%>%dplyr::select(-ns),sweep(x=dfsX%>%dplyr::select(ns),MARGIN=1,xanthosDivider[,1],FUN="/"));
-dfs<-dfs%>%dplyr::select(-c(grep("Mean",names(dfxanthos),value=T)));head(dfs)
-df<-dfs
-unique(df$Type)
-df<-df[df$Type=="Total",]
-df$Type<-gsub("Total","Scarcity",df$Type);head(df)
-
-years_scarcity<-grep("X",names(df),value=T)[grep("X",names(df),value=T)!="X..ID"];years_scarcity
-years_scarcityX<-sub("X","",years_tethys);years_scarcityX
-
-years<-c(years_tethys,paste("Mean_",min(years_scarcityX),"to",max(years_scarcityX),sep=""));years
-
-#------------------------------
-#--- Run spatial re-aggregation function maps_ReAggregate
-#--- Set paramters for function
-#------------------------------  
-
-# Setup for running function maps_ReAggregage
-moduleName<-"scarcity"  # Name of module being run tethys, xanthos, scarcity etc.
-moduleParam<-"scarcityFrac"  # Type of parameter for fig names demWatmmPerYr
-moduleUnits<- "Fraction"            # Units used for figures
-moduleTitleText<- "Water Scarcity"  # Title for figures. Used when titleOn is 1
-moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
-moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
-
-maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
-                 moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
-                 moduleTitleText=moduleTitleText,moduleAggType=moduleAggType,
-                 moduleRemove=moduleRemove)
-
-
 
 #________________________________________________________________________________
 #--------------------------------------------------------------------------------
