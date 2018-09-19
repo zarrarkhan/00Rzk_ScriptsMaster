@@ -11,7 +11,7 @@
 #rm(list=ls()) # Not used because this file is now sourced
 #graphics.off()
 memory.limit(size=1E+10)
-digitsMaps<<-0;
+#digitsMaps<<-0;
 
 #______________________
 # PDF/PNG/Anim Save functions
@@ -175,6 +175,29 @@ fig_LineCompareScenario<<- function(l1){
   p<-ggplot(l1,aes(x=x,y=NewValue,group=scenario))
   p<-p + z_theme
   p<-p + geom_line(aes(color=scenario),stat="identity",position="identity",size=2) 
+  p<-p + guides(fill = guide_legend(override.aes = list(colour = NULL)))
+  p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
+  p<-p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+  p<-p + scale_x_continuous (breaks=(seq(min(range(l1$x))-breakx_majMaster,max(range(l1$x))+breakx_majMaster,by=breakx_majMaster)), 
+                             minor_breaks=(seq(min(range(l1$x)),max(range(l1$x)),by=breakx_minMaster)),expand=c(0,breakx_majMaster/2))
+  p<-p + scale_y_continuous(breaks = pretty_breaks(n = prettyBreaksyMaster)) 
+  p <- p + scale_color_manual(values=colorsX_Basic,name="Scenario")
+}
+
+fig_RibbonCompareScenario<<- function(l1,x=x,ymin=ymin,ymax=ymax){
+  
+  if(!is.null(unique(l1[["Fill"]]))){
+    paletteX<-get(l1$FillPalette);
+    if(useNewLabels==1){
+      if(!is.null(names(paletteX))){
+        names(paletteX)<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",names(paletteX)))}
+      l1$Fill<-toTitleCase(sub("\\b[a-zA-Z0-9]{1} \\b", "",l1$Fill))
+    }}
+  
+  #l1<-l1[order(compare), ]
+  p<-ggplot(l1,aes(group=scenario))
+  p<-p + z_theme
+  p<-p + geom_ribbon(aes(x=x,ymin=ymin,ymax=ymax,fill=scenario),alpha=0.5) 
   p<-p + guides(fill = guide_legend(override.aes = list(colour = NULL)))
   p<-p + xlab(unique(l1$xLabel)) + ylab(eval(parse(text=paste(unique(l1$NewUnits),collapse="~"))))
   p<-p + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
@@ -352,9 +375,10 @@ fig_LineMultiple<<-function(l1){
 
 mapX_fill2Var<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scenario",var2="Fill"){
   nbreaks<-11
-  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  a<-signif(range(scaleData[complete.cases(scaleData),]),3)
   nbreaksX<-length(pretty_breaks(nbreaks)(a))
   colx1<-colorRampPalette(colx)(nbreaksX-1)
+  if(max(range(scaleData[complete.cases(scaleData),]))<10 & max(range(scaleData[complete.cases(scaleData),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(data) + tm_fill(col=val,palette = colx1,style="fixed",breaks=pretty_breaks(nbreaks)(a),
                             midpoint = 0, legend.show=T,title="",showNA=F,colorNA="white") + 
@@ -366,12 +390,6 @@ mapX_fill2Var<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scena
               legend.format = list(digits = digitsMaps),
                               legend.title.size = 1,legend.text.size = 0.8) +  
     tm_layout_z +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"), 
-    #              col = c(colx[1],colx[round(length(colx)/2,0)],colx[length(colx)]),
-    #              labels=c(paste("Min = ",prettyNum(signif(min(data@data,na.rm=T)/1,2),big.mark=","),sep=""),
-    #                       paste("Mean = ",prettyNum(signif(mean(as.matrix(data@data)/1,na.rm=T),2),big.mark=","),sep=""),
-    #                       paste("Max = ",prettyNum(signif(max(data@data,na.rm=T)/1,2),big.mark=","),sep=""))) +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"),col = "grey",labels="Missing") +
     tm_borders("black",lwd=0.5,lty=1) 
 }
 
@@ -379,9 +397,10 @@ mapX_fill2Var<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scena
 
 mapX_fill<<- function(data=dfx,scaleData=dfx@data){
   nbreaks<-5
-  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  a<-signif(range(scaleData[complete.cases(scaleData),]),3)
   nbreaksX<-length(pretty_breaks(nbreaks)(a))
   colx1<-colorRampPalette(colx)(nbreaksX-1)
+  if(max(range(scaleData[complete.cases(scaleData),]))<10 & max(range(scaleData[complete.cases(scaleData),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="fixed",breaks=pretty_breaks(nbreaks)(a),
                             midpoint = 0, legend.show=T,title="",showNA=F) + 
@@ -393,22 +412,15 @@ mapX_fill<<- function(data=dfx,scaleData=dfx@data){
               legend.position = c("LEFT","TOP"),
               legend.format = list(digits = digitsMaps),legend.title.size = 1,legend.text.size = 0.8) +  
     tm_layout_z +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"), 
-    #              col = c(colx[1],colx[round(length(colx)/2,0)],colx[length(colx)]),
-    #              labels=c(paste("Min = ",prettyNum(signif(min(data@data,na.rm=T)/1,2),big.mark=","),sep=""),
-    #                       paste("Mean = ",prettyNum(signif(mean(as.matrix(data@data)/1,na.rm=T),2),big.mark=","),sep=""),
-    #                       paste("Max = ",prettyNum(signif(max(data@data,na.rm=T)/1,2),big.mark=","),sep=""))) +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"),col = "grey",labels="Missing") +
     tm_borders("black",lwd=0.5,lty=1) 
 }
 
 mapX_fillFreeScale<<- function(data=dfx){
   nbreaks<-5
-  a<-round(range(scaleData[complete.cases(scaleData),]),0)
-  nbreaksX<-length(pretty_breaks(nbreaks)(a))
-  colx1<-colorRampPalette(colx)(nbreaksX-1)
+  colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
-  tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="pretty",n=pretty_breaks(nbreaks)(a),
+  tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="pretty",n=nbreaks,
                             midpoint = 0, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
     tm_legend(outside = F, text.size = .8)+
     tm_layout(panel.labels=gsub("X","",names(data)),
@@ -422,9 +434,10 @@ mapX_fillFreeScale<<- function(data=dfx){
 #Ztest
 mapX_raster<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
   nbreaks<-5
-  a<-round(range(scaleData[complete.cases(scaleData),]),0)
+  a<-signif(range(scaleData[complete.cases(scaleData),]),3)
   nbreaksX<-length(pretty_breaks(nbreaks)(a))
   colx1<-colorRampPalette(colx)(nbreaksX-1)
+  if(max(range(scaleData[complete.cases(scaleData),]))<10 & max(range(scaleData[complete.cases(scaleData),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
     tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="fixed",breaks=pretty_breaks(nbreaks)(a),
@@ -436,11 +449,6 @@ mapX_raster<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
               legend.position = c("LEFT","TOP"),
               legend.format = list(digits = digitsMaps),legend.title.size = 1,legend.text.size = 0.8) + 
     tm_layout_z +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"), 
-    #              col = c(colx[1],colx[round(length(colx)/2,0)],colx[length(colx)]),
-    #              labels=c(paste("Min = ",prettyNum(signif(min(data@data,na.rm=T)/1,2),big.mark=","),sep=""),
-    #                       paste("Mean = ",prettyNum(signif(mean(as.matrix(data@data)/1,na.rm=T),2),big.mark=","),sep=""),
-    #                       paste("Max = ",prettyNum(signif(max(data@data,na.rm=T)/1,2),big.mark=","),sep=""))) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_shape(shpa1) + tm_borders("black",lwd=0.5,lty=2) 
 }
@@ -449,6 +457,7 @@ mapX_raster<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
 mapX_rasterFreeScale<<-function(rasterBoundary=dfxtra,data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
     tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="pretty",n=nbreaks,
@@ -469,6 +478,7 @@ mapX_rasterFreeScale<<-function(rasterBoundary=dfxtra,data=dfx){
 mapX_fillKMeans<<- function(data=dfx,scaleData=dfx@data){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(scaleData[complete.cases(scaleData),]))<10 & max(range(scaleData[complete.cases(scaleData),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(data) + tm_fill(col=names(data),palette = colx1,
                            style="fixed",breaks=classIntervals(as.numeric(as.vector(as.matrix(scaleData)),rm.na=T), n=nbreaks, style = "kmeans")[2]$brks,
@@ -493,35 +503,26 @@ mapX_fillKMeans<<- function(data=dfx,scaleData=dfx@data){
 mapX_fill2VarKmeans<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1="scenario",var2="Fill"){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(scaleData[complete.cases(scaleData),]))<10 & max(range(scaleData[complete.cases(scaleData),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(data) + tm_fill(col=val,palette = colx1,style="kmeans",breaks=nbreaks,
                            midpoint = 0, legend.show=T,title="",showNA=F, colorNA = "white") + 
-    tm_facets(by=c(var1,var2),free.scales.fill=F) +
+    tm_facets(by=c(var1,var2),free.scales.fill=T) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_layout(panel.label.bg.color = "white",
               panel.label.size = 2,
               legend.position = c("LEFT","TOP"),
               legend.format = list(digits = digitsMaps),legend.title.size = 1,legend.text.size = 0.8) +  
     tm_layout_z +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"), 
-    #              col = c(colx[1],colx[round(length(colx)/2,0)],colx[length(colx)]),
-    #              labels=c(paste("Min = ",prettyNum(signif(min(data@data,na.rm=T)/1,2),big.mark=","),sep=""),
-    #                       paste("Mean = ",prettyNum(signif(mean(as.matrix(data@data)/1,na.rm=T),2),big.mark=","),sep=""),
-    #                       paste("Max = ",prettyNum(signif(max(data@data,na.rm=T)/1,2),big.mark=","),sep=""))) +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"),col = "grey",labels="Missing") +
-    tm_borders("black",lwd=0.5,lty=1) 
+     tm_borders("black",lwd=0.5,lty=1) 
 }
 
 
-#____________________________________________
-#____________________________________________
-# C. MAP FUNCTIONS
-#____________________________________________
-#____________________________________________
 
 mapX_fillFreeScaleKMeans<<- function(data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="kmeans",n=nbreaks,
                             midpoint = 0, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
@@ -542,6 +543,8 @@ mapX_rasterKMeans<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)
   
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(scaleData[complete.cases(scaleData),]))<10 & max(range(scaleData[complete.cases(scaleData),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
+  
   
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F,showNA=F) +
     tm_shape(data) +  tm_raster(col=names(data),palette = colx1,
@@ -554,11 +557,6 @@ mapX_rasterKMeans<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)
               legend.position = c("LEFT","TOP"),
               legend.format = list(digits = digitsMaps),legend.title.size = 1,legend.text.size = 0.8) + 
     tm_layout_z +
-    #tm_add_legend(title = paste("",sep=""),type = c("fill"), 
-    #              col = c(colx[1],colx[round(length(colx)/2,0)],colx[length(colx)]),
-    #              labels=c(paste("Min = ",prettyNum(signif(min(data@data,na.rm=T)/1,2),big.mark=","),sep=""),
-    #                       paste("Mean = ",prettyNum(signif(mean(as.matrix(data@data)/1,na.rm=T),2),big.mark=","),sep=""),
-    #                       paste("Max = ",prettyNum(signif(max(data@data,na.rm=T)/1,2),big.mark=","),sep=""))) +
     tm_legend(outside = TRUE, text.size = .8)+
     tm_shape(shpa1) + tm_borders("black",lwd=0.5,lty=2) 
 }
@@ -566,6 +564,7 @@ mapX_rasterKMeans<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)
 mapX_rasterFreeScaleKMeans<<-function(rasterBoundary=dfxtra,data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
+  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
   
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
     tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="kmeans",n=nbreaks,
@@ -576,7 +575,7 @@ mapX_rasterFreeScaleKMeans<<-function(rasterBoundary=dfxtra,data=dfx){
               panel.label.size = 2,
               legend.position = c("LEFT","TOP"),
               legend.format = list(digits = digitsMaps),legend.title.size = 1,legend.text.size = 0.8) + 
-    tm_layout_z + tm_legend(outside = F, text.size = .8)+
+    tm_layout_z + tm_legend(outside = F, text.size = .8)+ 
     tm_shape(shpa1) + tm_borders("black",lwd=0.5,lty=2) 
 }
 

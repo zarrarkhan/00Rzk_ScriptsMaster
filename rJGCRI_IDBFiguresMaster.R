@@ -43,7 +43,7 @@ gcamDatabaseName<<-gcamDatabaseNameAnalysis
 
 rangeX<<-seq(2005,2050,by=5)
 yearsX<<-paste("X",rangeX,sep="")  # To put in format that is read in from tethys and Demeter
-years_analysisXanthos<<-seq(1950,2005,by=1) # For Xanthos
+years_analysisXanthos<<-seq(1980,2005,by=5) # For Xanthos
 yearsXanthos<<-paste("X",years_analysisXanthos,sep="")  # To put in format that is read in from tethys
 
 
@@ -84,39 +84,7 @@ source(paste(wdScripts,"/rJGCRI_gis.R",sep=""))
 
 selectFigsparams<<-c()
 ## NOTE: Region will be substituted for each region analyzed
-selectFigsparams<<-c("map_basemaps_m5_Region_regionalMap",
-                    "map_basemaps_m6_Region_regionalMapBasinsProvinces",
-                    "map_basemaps_m1_Region_provincialLabelled",
-                    "map_basemaps_m3_Region_basinsLabelledCropped",
-                    "line_GCAM_gdpPerCapita_Region_1975to2050",
-                    "line_GCAM_pop_Region_1975to2050",
-                    "line_GCAM_gdp_Region_1975to2050",
-                    "SameScale1_bar_GCAM_primNrgConsumByFuel_Region_1975to2050",
-                    "SameScale1_bar_GCAMtotFinalNrgByEndUse_Region_1975to2050",
-                    "bar_GCAM_elecByTech_Region_1975to2050",
-                    "SameScale2_bar_GCAMwatWithdrawBySec_Region_1975to2050",
-                    "SameScale2_bar_GCAMwatConsumBySec_Region_1975to2050",
-                    "SameScale3_bar_GCAMirrWatWithBasin_Region_1975to2050",
-                    "SameScale3_bar_GCAMirrWatConsBasin_Region_1975to2050",
-                    "bar_GCAM_watWithdrawByCrop_Region_1975to2050",
-                    "bar_GCAM_aggLandAlloc_Region_1975to2050",
-                    "Edit1_AgbyCropNoForestPasture_bar_GCAM_agProdByCrop_Region_1975to2050",
-                    "map_xanthos_grid_Region_watSup_BySector_Mean_1950to2005_KMEANS",
-                    "map_xanthos_polyAdmin_Region_watSup_BySector_Mean_1950to2005_KMEANS",
-                    "map_xanthos_polysubBasin_Region_watSup_BySector_Mean_1950to2005_KMEANS",
-                    "map_tethys_grid_Region_demWatmmPerYr_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_tethys_grid_Region_demWatmmPerYr_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_tethys_polyAdmin_Region_demWatmmPerYr_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_tethys_polysubBasin_Region_demWatmmPerYr_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_Demeter_grid_Region_landcovFract_BySector_2005",
-                    "map_Demeter_grid_Region_landcovFract_BySector_2100",
-                    "map_Demeter_grid_Region_landcovFract_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_Demeter_polyAdmin_Region_landcovFract_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_Demeter_polysubBasin_Region_landcovFract_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_scarcity_grid_Region_scarcityFrac_Total_2005to2050_KMEANS",
-                    "map_scarcity_grid_Region_scarcityFrac_BySector_2005_KMEANS",
-                    "map_scarcity_polyAdmin_Region_scarcityFrac_BySector_FREESCALE_Mean_2005to2100_KMEANS",
-                    "map_scarcity_polysubBasin_Region_scarcityFrac_BySector_FREESCALE_Mean_2005to2100_KMEANS")
+selectFigsparams<<-c("map_basemaps_m5_Region_regionalMap")
 selectFigsparams<<-gsub("Region",region_i,selectFigsparams);
 selectedFigs<<-c()
 
@@ -153,7 +121,7 @@ connx<<- localDBConn(wddb, myDB)    # Connect to database
 if(reReadData==1){
 if(file.exists("queryData.proj")){file.remove("queryData.proj")} # Delete old project file
 for (scenario_i in scenariosComp){
-queryData.proj<<-addScenario(conn=connx, proj="queryData.proj",scenario=scenario_i,queryFile='analysis_queriesIDB.xml')  # Check your queries file
+queryData.proj<<-addScenario(conn=connx, proj="queryData.proj",scenario=scenario_ix,queryFile=paste(wdScripts,'/analysis_queriesIDB.xml',sep=""))  # Check your queries file
 }}else{
 queryData.proj<<-loadProject("queryData.proj")  # Use already saved database
 }
@@ -224,14 +192,16 @@ shp_HydroBasinsLev4<<-spTransform(shp_HydroBasinsLev4, CRS(projX))
 # Main Mapping function
 #--------------------------
 
-maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
+maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_ix,
                               moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
                               moduleTitleText=moduleTitleText,moduleAggType=moduleAggType,
                               moduleRemove=moduleRemove){
-  
-#  region_i=region_i;scenario_i=scenario_i;moduleName=moduleName;moduleParam=moduleParam;moduleUnits=moduleUnits;
-#  moduleTitleText=moduleTitleText;moduleAggType=moduleAggType;moduleRemove=moduleRemove
-  
+
+  if(FALSE){ # Setting variables for manual run
+    region_i=region_i;scenario_i=scenario_ix;moduleName=moduleName;moduleParam=moduleParam;
+    moduleUnits=moduleUnits;moduleTitleText=moduleTitleText;moduleAggType=moduleAggType;
+    moduleRemove=moduleRemove;}
+
   #---------------------------------------------------------------------------
   #---------------------------------------------------------------------------
   # BY YEAR
@@ -275,12 +245,6 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_i,
     dfx<-df3
     dfx@data<-subset(dfx@data,select=c(unique(df$Type)))  # Choose the Sectors
     if(!is.null(moduleRemove)){dfx@data<-dfx@data%>%dplyr::select(-moduleRemove)}
-    
-    # Remove outliers (anything greater than 5 sd from mean, replace with NA)
-    #m<-as.matrix(dfx@data)
-    #m[m>(mean(m)+5*sd(m))]<-NA
-    #dfx@data<-as.data.frame(m)
-    #apply(dfgrid@data,2,max)
     
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
@@ -1795,11 +1759,66 @@ dfCOL<-df%>%filter(region=="Colombia",x>=2020,x<=2030)%>%
                              (x==2030 & Fill2=="a Coal")~8.64,
                              (x==2030 & Fill2=="c Gas")~2.16,
                              (x==2030 & Fill2=="k Hydro")~98.18,
+                             (x==2006 & Fill2=="e Oil")~0.0159,
+                             (x==2006 & Fill2=="c Gas")~6.8701,
+                             (x==2006 & Fill2=="b Coal")~2.588,
+                             (x==2006 & Fill2=="k Hydro")~4.02534,
+                             (x==2007 & Fill2=="e Oil")~0.0198,
+                             (x==2007 & Fill2=="c Gas")~6.117.9,
+                             (x==2007 & Fill2=="b Coal")~2.903,
+                             (x==2007 & Fill2=="k Hydro")~4.17952,
+                             (x==2008 & Fill2=="e Oil")~0.0145,
+                             (x==2008 & Fill2=="c Gas")~5.231,
+                             (x==2008 & Fill2=="b Coal")~2.4868,
+                             (x==2008 & Fill2=="k Hydro")~4.3520,
+                             (x==2009 & Fill2=="e Oil")~0.3754,
+                             (x==2009 & Fill2=="c Gas")~10.4172,
+                             (x==2009 & Fill2=="b Coal")~3.6951,
+                             (x==2009 & Fill2=="k Hydro")~3.87138,
+                             (x==2010 & Fill2=="e Oil")~0.483,
+                             (x==2010 & Fill2=="c Gas")~11.5451,
+                             (x==2010 & Fill2=="b Coal")~3.4646,
+                             (x==2010 & Fill2=="k Hydro")~3.80886,
+                             (x==2011 & Fill2=="e Oil")~0.111,
+                             (x==2011 & Fill2=="c Gas")~7.5962,
+                             (x==2011 & Fill2=="b Coal")~1.6269,
+                             (x==2011 & Fill2=="k Hydro")~4.52588,
+                             (x==2012 & Fill2=="e Oil")~0.203,
+                             (x==2012 & Fill2=="c Gas")~8.7113,
+                             (x==2012 & Fill2=="b Coal")~2.4926,
+                             (x==2012 & Fill2=="k Hydro")~4.49236,
+                             (x==2013 & Fill2=="e Oil")~0.3551,
+                             (x==2013 & Fill2=="c Gas")~10.9558,
+                             (x==2013 & Fill2=="b Coal")~5.5262,
+                             (x==2013 & Fill2=="k Hydro")~4.18359,
+                             (x==2014 & Fill2=="e Oil")~0.2932,
+                             (x==2014 & Fill2=="c Gas")~12.3693,
+                             (x==2014 & Fill2=="b Coal")~5.6302,
+                             (x==2014 & Fill2=="k Hydro")~4.21576,
+                             (x==2015 & Fill2=="e Oil")~1.5767,
+                             (x==2015 & Fill2=="c Gas")~12.8095,
+                             (x==2015 & Fill2=="b Coal")~6.245,
+                             (x==2015 & Fill2=="k Hydro")~4.24638,
+                             (x==2016 & Fill2=="e Oil")~2.0563,
+                             (x==2016 & Fill2=="c Gas")~10.3205,
+                             (x==2016 & Fill2=="b Coal")~5.3799,
+                             (x==2016 & Fill2=="k Hydro")~4.42461,
                              TRUE ~ NA_real_),
          value=NewValue);
 # Add new Factors if needed
 dfCOLx<-dfCOL[complete.cases(dfCOL),]
 dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2006, NewValue=2.6126, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2007, NewValue=2.7894, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2008, NewValue=3.1418, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2009, NewValue=2.7641, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2010, NewValue=3.2061, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2011, NewValue=4.0292, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2012, NewValue=3.5592, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2013, NewValue=3.5220, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2014, NewValue=3.7645, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2015, NewValue=3.4535, value=NewValue))
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2011, NewValue=3.9378, value=NewValue))
 df<-rbind.data.frame(df,dfCOL)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
@@ -2089,6 +2108,31 @@ df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
                         FillLabel2="Type",
                         FillPalette2="colorsX_Unassigned") %>%
   subset(.,select=-c(landleaf));
+# Add Local Data For Comparison
+# Add data for Existing Variables & Years
+dfCOL<-data.frame()
+dfCOL<-df%>%filter(region=="Colombia",x>=2005,x<=2015)%>%
+  dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
+  mutate(scenario="LocalData",
+         Query="A.Pinchao_AgriculturalCensus",
+         NewValue= case_when((x==2010 & Fill2=="biomass")~0,
+                             (x==2010 & Fill2=="crops")~45,
+                             (x==2010 & Fill2=="forest (unmanaged)")~587,
+                             (x==2010 & Fill2=="forest (managed)")~1.8,
+                             (x==2010 & Fill2=="grass")~145,
+                             (x==2010 & Fill2=="pasture (grazed)")~95,
+                             (x==2010 & Fill2=="pasture (other)")~123,
+                             (x==2010 & Fill2=="otherarable")~30,
+                             (x==2010 & Fill2=="rock and desert")~9,
+                             (x==2010 & Fill2=="shrubs")~65,
+                             (x==2010 & Fill2=="urban")~4,
+                             (x==2010 & Fill2=="tundra")~0,
+                             TRUE ~ NA_real_),
+         value=NewValue);
+# Add new Factors if needed
+dfCOLx<-dfCOL[complete.cases(dfCOL),]
+dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Water",x=2010, NewValue=29, value=NewValue))
+df<-rbind.data.frame(df,dfCOL)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
 tbl <- getQuery(queryData.proj, "Land Use Change Emission (future)") # Tibble
@@ -2386,7 +2430,7 @@ dir<-paste(wdfigsOut,"/",region_i,"/DiffPlots",sep="")
       l1<-rbind.data.frame(xsum,xmean);head(l1)
       
       
-       p <- fig_LineCompareScenario(l1) + if(titleOn==1){ggtitle (paste(unique(l1$Title)," ","National US ",NumStates," States"," ",scenario_i,sep=""))}else{ggtitle(NULL)} 
+       p <- fig_LineCompareScenario(l1) + if(titleOn==1){ggtitle (paste(scenario_ix,sep=""))}else{ggtitle(NULL)} 
       plot(p)
       
       fname<-paste(paramx,"_LinesComp_",min(range(l1$x)),"to",max(range(l1$x)),sep="")
@@ -2654,8 +2698,8 @@ for(scenario_i in scenariosIndv){
  
 # Create Folders
 if(!dir.exists(paste(wdfigsOut,"/",region_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,sep=""))}
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,sep=""))}
-dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,sep="")
+if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))}
+dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep="")
 
 
 #________________________________________________________________________________
@@ -2672,8 +2716,8 @@ dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,sep="")
    
       
       # Create Output Directory
-      if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/GCAMCharts",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/GCAMCharts",sep=""))}
-      dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,"/GCAMCharts",sep="")
+      if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/GCAMCharts",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/GCAMCharts",sep=""))}
+      dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/GCAMCharts",sep="")
       
   
    
@@ -2864,13 +2908,13 @@ if(FALSE) {
 if(runTethysMaps==1){
 
 # Create Output Directory
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/TethysWatDem",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/TethysWatDem",sep=""))}
-dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,"/TethysWatDem",sep="")
+if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/TethysWatDem",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/TethysWatDem",sep=""))}
+dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/TethysWatDem",sep="")
 # subBasin directory
-if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/TethysWatDem/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/TethysWatDem/subBasin",sep=""))}
+if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/TethysWatDem/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/TethysWatDem/subBasin",sep=""))}
 
 
-wdtethys1<-paste(wdtethys,scenario_i,sep="") # Tethys data directory
+wdtethys1<-paste(wdtethys,scenario_ix,sep="") # Tethys data directory
 
 df<-data.frame()
 # Read in Data Files
@@ -2922,11 +2966,14 @@ moduleUnits<- "mm"            # Units used for figures
 moduleTitleText<- "Water Demands (mm)"  # Title for figures. Used when titleOn is 1
 moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
 moduleRemove<-c("Total","Non_Agriculture")   # Remove certain categories for particular modules. Make NULL if not needed
+digitsMaps<<-0 # Digits for Legend
 
-maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
+maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
                  moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
                  moduleTitleText=moduleTitleText,moduleAggType=moduleAggType,
                  moduleRemove=moduleRemove)
+
+
 
 } # Close Tethys Run
 #________________________________________________________________________________
@@ -2940,11 +2987,11 @@ maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
 if(runDemeterMaps==1){
   
   # Create Output Directory
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/DemeterLandUse",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/DemeterLandUse",sep=""))}
-  dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,"/DemeterLandUse",sep="")
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/DemeterLandUse/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/DemeterLandUse/subBasin",sep=""))}
+  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/DemeterLandUse",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/DemeterLandUse",sep=""))}
+  dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/DemeterLandUse",sep="")
+  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/DemeterLandUse/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/DemeterLandUse/subBasin",sep=""))}
   
-  wdDemeter1<-paste(wdDemeter,scenario_i,"/spatial_landcover_tabular",sep="") # Demeter data directory
+  wdDemeter1<-paste(wdDemeter,scenario_ix,"/spatial_landcover_tabular",sep="") # Demeter data directory
   
   df<-data.frame()
   # Read in Data Files
@@ -2995,7 +3042,7 @@ if(runDemeterMaps==1){
   moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
   moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
   
-  maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
+  maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
                    moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
                    moduleTitleText=moduleTitleText,moduleAggType=moduleAggType,
                    moduleRemove=moduleRemove)
@@ -3023,9 +3070,9 @@ if(runXanthosMaps==1){
   moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
   
   # Create Output Directory
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup",sep=""))}
-  dir<-paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup",sep="")
-  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_i,"/XanthosWatSup/subBasin",sep=""))}
+  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/XanthosWatSup",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/XanthosWatSup",sep=""))}
+  dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/XanthosWatSup",sep="")
+  if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/XanthosWatSup/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/XanthosWatSup/subBasin",sep=""))}
   
   wdXanthos1<-paste(wdXanthos,sep="") # Xanthos data directory
   
@@ -3036,7 +3083,7 @@ if(runXanthosMaps==1){
   
   df<-data.frame()
   # Read in Data Files
-  df_q <- read.csv(paste(wdXanthos1,scenario_i,"/q_bced_1960_1999_ipsl-cm5a-lr_1950_2005.csv",sep=""), header=F, stringsAsFactors = F)
+  df_q <- read.csv(paste(wdXanthos1,scenario_ix,"/q_bced_1960_1999_ipsl-cm5a-lr_1950_2005.csv",sep=""), header=F, stringsAsFactors = F)
   names(df_q)<-paste("X",c(1950:2005),sep=""); head(df_q)
   df_q$Type<-paste("Runoff",sep="");df_q<-cbind.data.frame(xanthosCoords,df_q); df<-rbind.data.frame(df,df_q);
   head(df)
@@ -3060,7 +3107,7 @@ if(runXanthosMaps==1){
 #------------------------------  
   
   
-  maps_ReAggregate(region_i=region_i,scenario_i=scenario_i,
+  maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
                    moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
                    moduleTitleText=moduleTitleText,moduleAggType=moduleAggType,
                    moduleRemove=moduleRemove)
@@ -3076,7 +3123,7 @@ if(runXanthosMaps==1){
 #--------------------------------------------------------------------------------
 #________________________________________________________________________________
 
-if(runScarcity==1){
+if(1 %in% c(runScarcity,runScarcityImpacts)){
   
   
   # Create Output Directory
@@ -3185,6 +3232,8 @@ maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
 #--- Xanthos Impacts Scenarios
 #------------------------------  
 
+if(runScarcityImpacts==1){
+
 #---------------------
 # Create Output Directory
 if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep=""))}
@@ -3193,61 +3242,58 @@ dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts",sep="")
 if(!dir.exists(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts/subBasin",sep=""))){dir.create(paste(wdfigsOut,"/",region_i,"/",scenario_ix,"/Impacts/subBasin",sep=""))}
 
 
-# Tethys Data
-wdtethys1<-paste(wdtethys,scenario_ix,sep="") # Tethys data directory
-df<-data.frame()
-# Read in Data Files
-df_dom <- read.csv(paste(wdtethys1,"/wddom.csv",sep=""), stringsAsFactors = F)
-df_dom$Type<-"Domestic"; df<-rbind.data.frame(df,df_dom);
-df_elec <- read.csv(paste(wdtethys1,"/wdelec.csv",sep=""), stringsAsFactors = F)
-df_elec$Type<-"Electric"; df<-rbind.data.frame(df,df_elec);
-df_irr <- read.csv(paste(wdtethys1,"/wdirr.csv",sep=""), stringsAsFactors = F)
-df_irr$Type<-"Irrigation"; df<-rbind.data.frame(df,df_irr);
-df_liv <- read.csv(paste(wdtethys1,"/wdliv.csv",sep=""), stringsAsFactors = F)
-df_liv$Type<-"Livestock"; df<-rbind.data.frame(df,df_liv);
-df_mfg <- read.csv(paste(wdtethys1,"/wdmfg.csv",sep=""), stringsAsFactors = F)
-df_mfg$Type<-"MFG"; df<-rbind.data.frame(df,df_mfg);
-df_min <- read.csv(paste(wdtethys1,"/wdmin.csv",sep=""), stringsAsFactors = F)
-df_min$Type<-"Mining"; df<-rbind.data.frame(df,df_min);
-df_noag <- read.csv(paste(wdtethys1,"/wdnonag.csv",sep=""), stringsAsFactors = F)
-df_noag$Type<-"Non_Agriculture"; df<-rbind.data.frame(df,df_noag);
-df_total <- read.csv(paste(wdtethys1,"/wdtotal.csv",sep=""), stringsAsFactors = F)
-df_total$Type<-"Total";df<-rbind.data.frame(df,df_total);
-head(df)
-colnames(df)[which(names(df) == "latitude")] <- "lat"
-colnames(df)[which(names(df) == "longitude")] <- "lon"
-names(df)<-gsub("x","X",names(df),ignore.case=F)
-head(df)
-df<-df%>%dplyr::select(lat,lon,yearsX,Type)
-years_tethys<-grep("X",names(df),value=T)[grep("X",names(df),value=T)!="X..ID"];years_tethys
-years_tethysX<-sub("X","",years_tethys);years_tethysX
-df$Mean<-rowMeans(df%>%dplyr::select(years_tethys))
-colnames(df)[which(names(df) == "Mean")] <- paste("Mean_",min(years_tethysX),"to",max(years_tethysX),sep="")
-head(df)
-dftethys<-df  
+# Setup for running function maps_ReAggregage
+moduleName<-"RunOffScenarios"  # Name of module being run tethys, xanthos, scarcity etc.
+moduleParam<-"runoff"  # Type of parameter for fig names demWatmmPerYr
+moduleUnits<- "mm"            # Units used for figures
+moduleTitleText<- "Runoff (mm)"  # Title for figures. Used when titleOn is 1
+moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
+moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
 
 # Xanthos Scenarios RCP 6
+# Xanthos Data
+wdXanthos1<-paste(wdXanthos,sep="") # Xanthos data directory
+xanthosCoords<-read.csv(paste(dirname(wdXanthos1),"/input/reference/coordinates.csv",sep=""), header=F, stringsAsFactors = F); head(xanthosCoords)
+xanthosCoords<-xanthosCoords[,2:3];head(xanthosCoords)
+names(xanthosCoords)<-c("lon","lat")
+xanthosGridAreaHec<-read.csv(paste(dirname(wdXanthos),"/input/reference/Grid_Areas_ID.csv",sep=""), header=F, stringsAsFactors = F);
+names(xanthosGridAreaHec)<-"Area_hec"; head(xanthosGridAreaHec)
+
+# Convert to mm
+
+
 df<-data.frame()
 for(i in c("noresm1-m","ipsl-cm5a-lr","miroc-esm-chem","gfdl-esm2m","hadgem2-es")){
   df_q1 <- read.csv(paste(wdXanthosRuns,"/pm_abcd_mrtm_",i,"_rcp6p0_1950_2099/q_km3peryear_pm_abcd_mrtm_",i,"_rcp6p0_1950_2099.csv",sep=""), header=T, stringsAsFactors = F);head(df_q1)
-  df_q1<-df_q1%>%mutate(Type=paste("Runoff",sep=""),latitude=xanthosCoords$lat,longitude=xanthosCoords$lon,
+  df_q1<-df_q1%>%dplyr::select(-id)
+  cols2divide<-names(df_q1)
+  xDivider<-xanthosGridAreaHec*0.01 # km2
+  df_q1<-cbind.data.frame(df_q1%>%dplyr::select(-cols2divide),sweep(x=df_q1%>%dplyr::select(cols2divide),MARGIN=1,xDivider[,1],FUN="/"));
+  df_q1<-df_q1%>%mutate_all(funs(.*1000000))  # Convert to mm/yr
+  df_q1<-df_q1%>%mutate(Type=paste(moduleTitleText,sep=""),latitude=xanthosCoords$lat,longitude=xanthosCoords$lon,
                         scenario=i);
   df<-rbind.data.frame(df,df_q1);tail(df)
 }
-a<-gsub("X","",names(df%>%dplyr::select(-id,-Type,-latitude,-longitude,-scenario)))%>%as.character%>%as.numeric
+a<-gsub("X","",names(df%>%dplyr::select(-Type,-latitude,-longitude,-scenario)))%>%as.character%>%as.numeric
 min(a);max(a)
-df1<-df%>%mutate(Mean=rowMeans(df%>%dplyr::select(-id,-Type,-latitude,-longitude,-scenario)));
+df1<-df%>%mutate(Mean=rowMeans(df%>%dplyr::select(-Type,-latitude,-longitude,-scenario)));
 colnames(df1)[which(names(df1) == "Mean")] <- paste("Mean_",min(a),"to",max(a),sep="")
+
+colnames(df1)[which(names(df1) == "latitude")] <- "lat"
+colnames(df1)[which(names(df1) == "longitude")] <- "lon"
+names(df1)<-gsub("x","X",names(df1),ignore.case=F)
+head(df1)
+
 dfxanthosImpacts<-df1
 
-#--------------------
-# Create Impacts Sceario Figures
-#--------------------
-# Crop to region
-df<-dfxanthosImpacts
-# Gridded Boundary
-df1<-df%>%mutate(lat=latitude,lon=longitude)%>%dplyr::select(-id,-longitude,-latitude,-Type)
+years<<-c("X2010","X2020","X2030","X2040","X2050");
 
+#--------------------
+# Create Impacts Scenario Figures
+#--------------------
+
+# Crop to region
+df<-dfxanthosImpacts%>%dplyr::select(years,scenario,lat,lon)
 
 # Convert to Spatial Point Data Frames
 df1 = SpatialPointsDataFrame(SpatialPoints(coords=(cbind(df1$lon,df1$lat))),data=df1)
@@ -3261,75 +3307,258 @@ df3<-df2
 gridded(df3)<-TRUE # Create Gridded Data
 dfxtra<<-dfxtra
 
-years<-c("X2010","X2020","X2030","X2040");
+# Gridded scenarios Compare (Produced for each scenario)
+for(XanthosScenario_i in unique(df3$scenario)){
+
 dfx<-df3
-dfx@data<-dfx@data%>%dplyr::select(years,scenario)%>%filter(scenario=="noresm1-m") # Choose the years
+dfx@data<-dfx@data%>%dplyr::select(years,scenario)%>%filter(scenario==XanthosScenario_i) # Choose the years
 dfx@data<-dfx@data%>%dplyr::select(-scenario)  # Remove mean year
 
-colx<<-colorsAbsolute #------Choose color palette
-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)+m8
+fname<-paste("map_",moduleName,"_grid_",region_i,"_",XanthosScenario_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),"_1SCALE",sep="")
+map<-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=df3@data%>%dplyr::select(years))+
+  tm_layout(title=XanthosScenario_i,title.position=c("left","bottom"))+tm_facets(nrow=1)+m8
+print_PDFPNG(map,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
 
+if(animationsOn==1){
+fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",XanthosScenario_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),"_1SCALE.gif",sep="")
+animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleTitleText,sep=""), title.size = 3, panel.label.size = 2,
+                              title.position=c("left","top")),
+          filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
+animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
+           filename=fname,width=NA,height=NA,delay=delay)
+print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
+           dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
+}
 
+fname<-paste("map_",moduleName,"_grid_",region_i,"_",XanthosScenario_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),"_1SCALEKMEANS",sep="")
+map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=df3@data%>%dplyr::select(years))+
+  tm_layout(title=XanthosScenario_i,title.position=c("left","bottom"))+tm_facets(nrow=1)+m8
+print_PDFPNG(map,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
 
+if(animationsOn==1){
+fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",XanthosScenario_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),"_1SCALEKMEANS.gif",sep="")
+animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleTitleText,sep=""), title.size = 3, panel.label.size = 2,
+                              title.position=c("left","top")),
+                filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
+animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
+                filename=fname,width=NA,height=NA,delay=delay)
+print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
+             dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
 
-fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
+}
+} # Close Loop for Different Xanthos Scenarios
+
+#____________________
+# By Admin Region
+#____________________
+
+head(df3)
+
+dxpbyAdmin<-NULL
+for(i in unique(df3$scenario)){
+dxp1<-df3
+dxp1@data<-dxp1@data%>%filter(scenario==i)%>%dplyr::select(-scenario)
+dxp<<-spatAgg_gridded2shape(gridded=dxp1,shape=shpa1,byLev="NAME_1",boundBox=b1,moduleAggType=moduleAggType)
+dxp<<-dxp%>%mutate(scenario=i)
+a1<-shpa1
+a1@data<-join(a1@data,dxp,by=c("NAME_1"))%>%dplyr::select(-c(NAME_1));
+if(is.null(dxpbyAdmin)){dxpbyAdmin<<-a1}else{dxpbyAdmin<-rbind(dxpbyAdmin,a1,makeUniqueIDs = TRUE)}
+}
+
+head(dxpbyAdmin); unique(dxpbyAdmin$scenario)
+
 if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-  map<-mapX_raster(rasterBoundary=dfxtra,data=dfxa,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
-    if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
+  write.csv(dxpbyAdmin,file=paste(dir,"/table_",moduleName,"_",region_i,"_Impacts_ByAdminRegion.csv",sep=""),row.names=F)
+}
+
+dfx<-dxpbyAdmin
+dfx@data<-dfx@data%>%dplyr::select(years,scenario)%>%
+  gather(key=year,value=NewValue,-scenario)%>%mutate(year=as.numeric(as.character(gsub("X","",year))))
+head(dfx)
+
+
+fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",year_i),sep="")
+if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+  map <- mapX_fill2Var(data=dfx,scaleData=dfx@data%>%subset(select=c("NewValue")),
+                       val="NewValue",var1="scenario",var2="year")
   map
   print_PDFPNG(map,dir=dir,filename=fname,
-               figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
+               figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*0.8,pdfpng=pdfpng)
   selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-  if(animationsOn==1){
-    fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE.gif",sep="")
-    if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                      filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
-      animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
-                      filename=fname,width=NA,height=NA,delay=delay)
-      print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
-                   dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-      selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-  }
 }
 
-##ZTEST    
-# KMEANS
-if(sd(as.matrix(dfCommonScaleYears))!=0){
-  fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
-  if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-    map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
-      if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
-    map
-    print_PDFPNG(map,dir=dir,filename=fname,
-                 figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-    selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
-    #---- Animation File
-    if(animationsOn==1){
-      fname<-paste(dir,"/anim_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE.gif",sep="")
-      if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        animation_tmapZ(map+tm_layout(main.title=NA, title=paste(moduleUnits,sep=""), title.size = 3, panel.label.size = 2),
-                        filename=gsub(".gif","wLegend.gif",fname),width=NA,height=NA,delay=delay)
-        animation_tmapZ(map+tm_layout(legend.show=F,main.title=NA, title="", title.size = 3, panel.label.size = 2),
-                        filename=fname,width=NA,height=NA,delay=delay)
-        print_PDFPNG(map+ tm_layout(frame=FALSE,legend.only=T, panel.show=FALSE,legend.text.size=1),
-                     dir=dir,filename=gsub(".gif","Legend",gsub(paste(dir,"/",sep=""),"",fname)),figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
-        selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))}
-    }
-  }
+#KMEANS
+fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",year_i),"_KMEANS",sep="")
+if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+  map <- mapX_fill2VarKmeans(data=dfx,scaleData=dfx@data%>%subset(select=c("NewValue")),
+                       val="NewValue",var1="scenario",var2="year")
+  map
+  print_PDFPNG(map,dir=dir,filename=fname,
+               figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*0.8,pdfpng=pdfpng)
+  selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+}
+
+#____________________
+# By Basin Region
+#____________________
+
+head(df3)
+
+dxpbyBasin<-NULL
+for(i in unique(df3$scenario)){
+  dxp1<-df3
+  dxp1@data<-dxp1@data%>%filter(scenario==i)%>%dplyr::select(-scenario)
+  dxp<<-spatAgg_gridded2shape(gridded=dxp1,shape=shpbasin1,byLev="basin_name",boundBox=b1,moduleAggType=moduleAggType)
+  dxp<<-dxp%>%mutate(scenario=i)
+  a1<-shpbasin1
+  a1@data<-join(a1@data,dxp,by=c("basin_name"))%>%dplyr::select(-c(basin_name));
+  if(is.null(dxpbyBasin)){dxpbyBasin<<-a1}else{dxpbyBasin<-rbind(dxpbyBasin,a1,makeUniqueIDs = TRUE)}
+}
+
+head(dxpbyBasin); unique(dxpbyBasin$scenario)
+
+if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+  write.csv(dxpbyBasin,file=paste(dir,"/table_",moduleName,"_",region_i,"_Impacts_ByBasinRegion.csv",sep=""),row.names=F)
+}
+
+dfx<-dxpbyBasin
+dfx@data<-dfx@data%>%dplyr::select(years,scenario)%>%
+  gather(key=year,value=NewValue,-scenario)%>%mutate(year=as.numeric(as.character(gsub("X","",year))))
+head(dfx)
+
+
+fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",year_i),sep="")
+if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+  map <- mapX_fill2Var(data=dfx,scaleData=dfx@data%>%subset(select=c("NewValue")),
+                       val="NewValue",var1="scenario",var2="year")
+  map
+  print_PDFPNG(map,dir=dir,filename=fname,
+               figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*0.8,pdfpng=pdfpng)
+  selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
+}
+
+#KMEANS
+fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",moduleUnits,"_",gsub("X","",year_i),"_KMEANS",sep="")
+if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
+  map <- mapX_fill2VarKmeans(data=dfx,scaleData=dfx@data%>%subset(select=c("NewValue")),
+                             val="NewValue",var1="scenario",var2="year")
+  map
+  print_PDFPNG(map,dir=dir,filename=fname,
+               figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*0.8,pdfpng=pdfpng)
+  selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
 }
 
 
-# Figure National Mean Runoff by scneario and Year (Line chart)
+#-------------------------------------------------------------
+# Figure National Mean Runoff by scenario and Year (Line chart)
+#------------------------------------------------------------
 
-#dfq1Nat<-dfq1%>%dplyr::select(-latitude,longitude)
+df1a<-dfxanthosImpacts%>%dplyr::select(-id,-latitude,-longitude,-Type,-contains("Mean"))%>%
+  group_by(scenario)%>%
+  summarize_all(funs(min))%>%
+  gather(key=x,value=ymin,-scenario)%>%
+  mutate(x=gsub("X","",x),x=as.numeric(as.character(x)),
+         xLabel="Year",NewUnits="~km^3/yr",
+         Fill=scenario,FillPalette="colorsX_Basic",FillLabel=scenario);
 
-# Figure Mean 1950- by scenario (Maps)
+df1b<-dfxanthosImpacts%>%dplyr::select(-id,-latitude,-longitude,-Type,-contains("Mean"))%>%
+  group_by(scenario)%>%
+  summarize_all(funs(max))%>%
+  gather(key=x,value=ymax,-scenario)%>%
+  mutate(x=gsub("X","",x),x=as.numeric(as.character(x)),
+         xLabel="Year",NewUnits="~km^3/yr",
+         Fill=scenario,FillPalette="colorsX_Basic",FillLabel=scenario)
 
+df1all<-join(df1a,df1b,by=c("scenario","x","Fill","xLabel","NewUnits","FillPalette","FillLabel"))
 
+df1c<-dfxanthosImpacts%>%dplyr::select(-id,-latitude,-longitude,-Type,-contains("Mean"))%>%
+  group_by(scenario)%>%
+  summarize_all(funs(mean))%>%
+  gather(key=x,value=ymean,-scenario)%>%
+  mutate(x=gsub("X","",x),x=as.numeric(as.character(x)),
+         xLabel="Year",NewUnits="~km^3/yr",
+         Fill=scenario,FillPalette="colorsX_Basic",FillLabel=scenario);
+
+df1all<-join(df1all,df1c,by=c("scenario","x","Fill","xLabel","NewUnits","FillPalette","FillLabel"))
+
+df1d<-dfxanthosImpacts%>%dplyr::select(-id,-latitude,-longitude,-Type,-contains("Mean"))%>%
+  group_by(scenario)%>%
+  summarize_all(funs(var))%>%
+  gather(key=x,value=yvar,-scenario)%>%
+  mutate(x=gsub("X","",x),x=as.numeric(as.character(x)),
+         xLabel="Year",NewUnits="~km^3/yr",
+         Fill=scenario,FillPalette="colorsX_Basic",FillLabel=scenario);
+
+df1all<-join(df1all,df1d,by=c("scenario","x","Fill","xLabel","NewUnits","FillPalette","FillLabel"))
+
+df1<-df1all%>%mutate(NewValue=ymax)
+p<-fig_LineCompareScenario(df1)
+plot(p)
+fname<-paste("lines_Max_",region_i,"_XanthosScenarios_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),sep="")
+print_PDFPNG(p,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
+
+df1<-df1all%>%mutate(NewValue=ymin)
+p<-fig_LineCompareScenario(df1)
+plot(p)
+fname<-paste("lines_Min_",region_i,"_XanthosScenarios_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),sep="")
+print_PDFPNG(p,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
+
+df1<-df1all%>%mutate(NewValue=ymean)
+p<-fig_LineCompareScenario(df1)
+plot(p)
+fname<-paste("lines_Mean_",region_i,"_XanthosScenarios_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),sep="")
+print_PDFPNG(p,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
+
+df1<-df1all%>%mutate(NewValue=yvar)
+p<-fig_LineCompareScenario(df1)
+plot(p)
+fname<-paste("lines_Var_",region_i,"_XanthosScenarios_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),sep="")
+print_PDFPNG(p,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
+
+df1<-df1all%>%mutate(NewValue=rollmean(ymean,5,na.pad=T))
+p<-fig_LineCompareScenario(df1)
+plot(p)
+fname<-paste("lines_Mean5yrMA_",region_i,"_XanthosScenarios_",moduleParam,"_",moduleUnits,"_",gsub("X","",min(years)),"to",gsub("X","",max(years)),sep="")
+print_PDFPNG(p,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
+
+# Figure National Mean Runoff by scenario and Year (Ribbon chart)
+
+df1sd<-dfxanthosImpacts%>%dplyr::select(-id,-latitude,-longitude,-Type,-contains("Mean"))%>%
+  group_by(scenario)%>%
+  summarize_all(funs(sd))%>%
+  gather(key=x,value=y1sd,-scenario)%>%
+  mutate(x=gsub("X","",x),x=as.numeric(as.character(x)),
+         xLabel="Year",NewUnits="~km^3/yr",
+         Fill=scenario,FillPalette="colorsX_Basic",FillLabel=scenario);
+
+df1mean<-dfxanthosImpacts%>%dplyr::select(-id,-latitude,-longitude,-Type,-contains("Mean"))%>%
+  group_by(scenario)%>%
+  summarize_all(funs(mean))%>%
+  gather(key=x,value=ymean,-scenario)%>%
+  mutate(x=gsub("X","",x),x=as.numeric(as.character(x)),
+         xLabel="Year",NewUnits="~km^3/yr",
+         Fill=scenario,FillPalette="colorsX_Basic",FillLabel=scenario)
+
+df1all<-join(df1sd,df1mean,by=c("scenario","x","Fill","xLabel","NewUnits","FillPalette","FillLabel"))
+df1<-df1all%>%mutate(ymin=ymean-y1sd,ymax=ymean+y1sd); head(df1)
+
+p<-fig_RibbonCompareScenario(df1,x=x,ymin=ymin,ymax=ymax)
+plot(p)
+
+fname<-paste("ribbon_Runoffmean1sd_",region_i,"_XanthosScenarios_",gsub("X","",min(years)),"to",gsub("X","",max(years)),sep="")
+print_PDFPNG(p,dir=dir,filename=fname,
+             figWidth_Inch=mapWidthInch*1.5,figHeight_Inch=mapHeightInch*1,pdfpng=pdfpng);
+
+#----------------
 
 head(dftethys);head(dfxanthos);head(dfxanthosImpacts);nrow(dftethys);nrow(dfxanthos)
-
 
 # Scarcity Data frame
 dfsX<-join(dftethys,dfxanthos%>%dplyr::select(lat,lon,grep("Mean",names(dfxanthos),value=T)),by=c("lat","lon"))
@@ -3353,13 +3582,6 @@ years<-c(years_tethys,paste("Mean_",min(years_scarcityX),"to",max(years_scarcity
 #--- Set paramters for function
 #------------------------------  
 
-# Setup for running function maps_ReAggregage
-moduleName<-"scarcity"  # Name of module being run tethys, xanthos, scarcity etc.
-moduleParam<-"scarcityFrac"  # Type of parameter for fig names demWatmmPerYr
-moduleUnits<- "Fraction"            # Units used for figures
-moduleTitleText<- "Water Scarcity"  # Title for figures. Used when titleOn is 1
-moduleAggType<- "depth"      # "depth" when using mm or "vol" when using km3
-moduleRemove<-NULL   # Remove certain categories for particular modules. Make NULL if not needed
 
 maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
                  moduleName=moduleName,moduleParam=moduleParam,moduleUnits=moduleUnits,
@@ -3367,6 +3589,7 @@ maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
                  moduleRemove=moduleRemove)
 
 
+}
 
 #________________________________________________________________________________
 #--------------------------------------------------------------------------------
@@ -3377,7 +3600,7 @@ maps_ReAggregate(region_i=region_i,scenario_i=scenario_ix,
 #________________________________________________________________________________
 
 selectFigsparams<<-gsub("Region",region_i,selectFigsparams);selectFigsparams
-reportSelFigsName<<-paste("Report_SelectedFigs_",region_i,"_",scenario_i,sep="");reportSelFigsName
+reportSelFigsName<<-paste("Report_SelectedFigs_",region_i,"_",scenario_ix,sep="");reportSelFigsName
 
 if(!dir.exists(paste(wd0,"/fig_outputsSelect",sep=""))){dir.create(paste(wd0,"/fig_outputsSelect",sep=""))}
 if(dir.exists(paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""))){unlink(paste(wd0,"/fig_outputsSelect/",reportSelFigsName,sep=""),recursive=T)}

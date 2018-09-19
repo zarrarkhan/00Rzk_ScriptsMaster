@@ -384,7 +384,8 @@ colorsX_elec_tech_colors <- c( "a Coal" = "gray60",
                                "n CHP" = "#507fab",
                                "o Battery" = "#92a75d",
                                "energy reduction" = "grey",
-                               "Total" = "black")
+                               "Total" = "black",
+                               "Other" = "black")
 
 # Print Colors palettes to view for reference
 #pdf(paste(wdfigsOut,"/ColorsCheck_colorsX_PAL_pri_ene.pdf",sep=""))  

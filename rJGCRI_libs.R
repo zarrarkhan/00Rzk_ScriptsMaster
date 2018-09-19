@@ -18,7 +18,7 @@ if("spDataLarge" %in% rownames(installed.packages()) == FALSE){install.packages(
 
 packagesX<-c("ggplot2","RColorBrewer","reshape2","magrittr","plyr","dplyr","tools","scales","rgdal",
              "rgeos","raster","tmap","animation","tis","tibble","here","classInt","tidyr",
-             "assertthat","readr","data.table","devtools","ncdf4")
+             "assertthat","readr","data.table","devtools","ncdf4","zoo")
 for(i in packagesX){if(i %in% rownames(installed.packages()) == FALSE) {install.packages(i)};library(i,character.only = TRUE)}
 
 #Additional Libraries

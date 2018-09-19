@@ -53,6 +53,7 @@ projection(r)<-proj4string(shape)
     w <- raster::extract(r,shape, method="simple",weights=T, normalizeWeights=F);head(w)
     dfx<-data.frame()
     for (i in seq(w)){
+      if(!is.null(w[[i]]))
       x<-as.data.frame(w[[i]])
       x$ID<-shape@data[[byLev]][[i]]
       x1<-data.frame(mapply(`*`,x%>%dplyr::select(colsx),x%>%dplyr::select(weight),SIMPLIFY=FALSE))%>%
