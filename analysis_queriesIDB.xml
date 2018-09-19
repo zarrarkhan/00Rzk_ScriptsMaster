@@ -2,7 +2,7 @@
 <queries>
 
  <aQuery>
-<supplyDemandQuery title="ag production by tech">
+ <supplyDemandQuery title="ag production by tech">
             <axis1 name="technology">technology[@name]</axis1>
             <axis2 name="Year">physical-output[@vintage]</axis2>
             <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and (local-name()='AgSupplySector')]/

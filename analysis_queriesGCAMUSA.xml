@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<queries>
+
+<aQuery>
+      <marketQuery title="Prices for all markets">
+         <axis1 name="market">market</axis1>
+         <axis2 name="Year">market</axis2>
+         <xPath buildList="true" dataName="price" group="false" sumAll="false">Marketplace/market[true()]/price/node()</xPath>
+         <comments/>
+      </marketQuery>
+  </aQuery>
+
+<aQuery>
+<supplyDemandQuery title="Total electricity delivered">
+         <axis1 name="region">region</axis1>
+         <axis2 name="Year">physical-output[@vintage]</axis2>
+         <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type = 'sector'  and ((@name='elect_td_bld' or @name='elect_td_ind' or @name='elect_td_trn') )]//*[@type='output']/physical-output/node()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+  </aQuery>
+
+<aQuery>
+<supplyDemandQuery title="Total electricity delivered before losses">
+         <axis1 name="region">region</axis1>
+         <axis2 name="Year">physical-output[@vintage]</axis2>
+         <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type = 'sector' (:collapse:) and ((@name='elect_td_bld' or @name='elect_td_ind' or @name='elect_td_trn') )]//*[@type='input' (:collapse:)]/demand-physical/node()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+  </aQuery>
+
+<aQuery>
+<supplyDemandQuery title="elec operating costs by technology and vintage">
+    <axis1 name="technology">technology</axis1>
+    <axis2 name="Year">operating-cost[@vintage]</axis2>
+    <xPath buildList="true" dataName="operating-cost" group="false" sumAll="false">*[@type='sector' and @name='electricity']/
+                  *[@type='subsector']/
+                  *[@type='technology']/
+                  operating-cost/node()
+               </xPath>
+    <comments/>
+    <showAttribute attribute-name="year" level="technology"/>
+</supplyDemandQuery>
+   </aQuery>
+
+
+<aQuery>
+      <supplyDemandQuery title="Zedit Electricity dispatch generation costs by technology">
+	<axis1 name="technology">technology[@name]</axis1>
+	<axis2 name="Year">technology[@year]</axis2>
+	<xPath buildList="true" dataName="cost" group="false" sumAll="false">*[@type = 'sector' (: collapse :) and (@name='elect_td_bld' or @name='electricity')]//*[@type = 'technology' and not(@name='elect_td_bld')]/cost/text()</xPath>
+	<comments/>
+	</supplyDemandQuery>
+    </aQuery>
+
+
+
+	<aQuery>
+      <supplyDemandQuery title="ZEdit Electricity production by technology by vintage by segment">
+         <axis1 name="technology">technology</axis1>
+         <axis2 name="Year">physical-output[@vintage]</axis2>
+         <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type = 'sector' and (@name='baseload electricity' or @name='intermediate electricity' or @name='subpeak electricity' or @name='peak electricity')]/*[@type = 'subsector']/*[@type = 'technology']/*[@type='output']/physical-output/node()</xPath>
+         <comments/>
+         <comments/>
+         <showAttribute attribute-name="year" level="technology"/>
+      </supplyDemandQuery>
+    </aQuery>
+
+<aQuery>  
+<all-regions />
+<supplyDemandQuery title="ZEdit Electricity generation capacity cost by technology by segment">
+         <axis1 name="technology">technology[@name]</axis1>
+         <axis2 name="Year">technology[@year]</axis2>
+         <xPath buildList="true" dataName="capacity" group="false" sumAll="false">*[@type = 'sector' and (@name='baseload electricity' or @name='intermediate electricity' or @name='subpeak electricity' or @name='peak electricity')]//*[@type = 'subsector']/*[@type = 'technology']/cost/text()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+</aQuery>
+
+
+<aQuery>  
+<all-regions />
+	<supplyDemandQuery title="ZEdit Electricity capacity-factor by technology by segment">
+         <axis1 name="technology">technology</axis1>
+         <axis2 name="Year">technology[@year]</axis2>
+         <xPath buildList="true" dataName="capacity" group="false" sumAll="false">*[@type = 'sector' and (@name='baseload electricity' or @name='intermediate electricity' or @name='subpeak electricity' or @name='peak electricity')]//*[@type = 'subsector']/*[@type = 'technology']/capacity-factor/node()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+	  </aQuery>
+
+<aQuery>	  
+<all-regions />
+	<query title="electricity generation by segment and tech">
+         <axis1 name="segment">segment[@name]</axis1>
+         <axis2 name="Year">dispatch[@year]</axis2>
+         <xPath buildList="true" dataName="segment-production" group="false" sumAll="false"><![CDATA[
+            declare function local:nest-land-category($leaf as node(), $level as xs:string, $child as node()*) as node() {
+                let $attrMatch := $leaf/@*[name()=$level],
+                    $attrValue := if(exists($attrMatch)) then string($attrMatch) else "NA"
+                return element { $level } {
+                    attribute name { $attrValue },
+                    $child
+                }
+            };
+            declare function local:run-nest-land-categories($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* { 	
+                let $regionsG := if(not($regions[1] = 'Global'))
+                                 then $regions
+                                 else distinct-values(collection($collection)/scenario/world/*[@type='region']/@name)
+                return
+                    for $scenario in $scenarios, 	    
+                        $region in $regionsG 	
+                    let $scenario_split := tokenize($scenario, ' '), 	    
+                        $currTree := collection($collection)/scenario[@name = $scenario_split[1] and @date = $scenario_split[2]]/world/*[@type='region' and @name=$region],
+                        $landLeaves := $currTree/*[@type='sector' and @name='electricity']/dispatch,
+                        $ret := document {
+                            element scenario {
+                                attribute name { $scenario_split[1] },
+                                attribute date { $scenario_split[2] },
+                                element region {
+                                    attribute type { "region" },
+                                    attribute name { $region },
+                                    for $disp in $landLeaves
+                                    return element dispatch {
+                                    attribute year { $disp/@year },
+                                    for $leaf in $disp/segment-production
+                                    (: TODO: not sure why I have to explicitly copy the land-allocation :)
+                                    let $copy := for $landAlloc in $leaf
+                                                 return element segment-production {
+                                                    text { $landAlloc/text() }
+                                                 }
+                                    (: A user could choose to nest by recursively calling for any of: ("crop", "land-region", "water", "mgmt-tech") :)
+                                    return local:nest-land-category($leaf, "tech-year", local:nest-land-category($leaf, "tech-name", local:nest-land-category($leaf,"state",local:nest-land-category($leaf, "segment", $copy))))
+                                    }
+                                }
+                            }
+                        }
+                    return $ret//text()
+            };
+            local:run-nest-land-categories((:scenarios:), (:regions:), (:collection:))
+            ]]></xPath>
+         <comments/>
+      </query>
+	</aQuery>  
+
+<aQuery>
+<all-regions />
+      <supplyDemandQuery title="Electricity generation by segment">
+         <axis1 name="segment">segment-production[@segment]</axis1>
+         <axis2 name="Year">dispatch[@year]</axis2>
+         <xPath buildList="true" dataName="generation" group="false" sumAll="false">*[@type = 'sector' and (@name='electricity')]/dispatch/segment-production/node()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+</aQuery>
+
+	<aQuery>
+      <supplyDemandQuery title="Electricity production by technology by vintage">
+         <axis1 name="technology">technology</axis1>
+         <axis2 name="Year">physical-output[@vintage]</axis2>
+         <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type = 'sector' (:collapse:) and @name='electricity']/*[@type = 'subsector']/*[@type = 'technology']/*[@type='output'(:collapse:)]/physical-output/node()</xPath>
+         <comments/>
+         <showAttribute attribute-name="year" level="technology"/>
+      </supplyDemandQuery>
+    </aQuery>
+
+<aQuery>
+      <supplyDemandQuery title="Electricity capacity by technology">
+         <axis1 name="technology">technology</axis1>
+         <axis2 name="Year">technology[@year]</axis2>
+         <xPath buildList="true" dataName="capacity" group="false" sumAll="false">*[@type = 'sector' (: collapse :) and (@name='electricity')]/*[@type = 'subsector']/*[@type = 'technology']/capacity[true() or @type='capacity' (: collapse :)]/node()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+    </aQuery>
+
+<aQuery>
+	<supplyDemandQuery title="Electricity costs by sector">
+         <axis1 name="sector">sector</axis1>
+         <axis2 name="Year">cost</axis2>
+         <xPath buildList="true" dataName="cost" group="false" sumAll="false">*[@type = 'sector' and (@name='electricity' or @name='elect_td_bld' or @name='elect_td_ind' or @name='elect_td_trn')]/cost/text()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+	</aQuery>
+	  
+<aQuery>  
+	  <supplyDemandQuery title="Electricity costs by subsector">
+         <axis1 name="subsector">subsector</axis1>
+         <axis2 name="Year">cost</axis2>
+         <xPath buildList="true" dataName="Price" group="false" sumAll="false">*[@type = 'sector' and @name='electricity']/*[@type = 'subsector']/cost/text()</xPath>
+         <comments>doesn't include rooftop PV</comments>
+      </supplyDemandQuery>
+	  </aQuery>
+
+<aQuery>
+<supplyDemandQuery title="Total final energy by aggregate end-use sector">
+         <axis1 name="sector">sector</axis1>
+         <axis2 name="Year">demand-physical[@vintage]</axis2>
+         <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and ((@name='building' or @name='industry' or @name='transportation') or (exists(child::keyword/@final-energy)))]//*[@type='input' (: collapse :) and not(@name='trn_pass_road' or @name='limestone' or @name='process heat cement' or @name='industrial energy use' or @name='industrial feedstocks' or @name='renewable' or @name='oil-credits')]/demand-physical[@unit='EJ']/node()</xPath>
+         <comments/>
+         <labelRewriteList append-values="false">
+            <level name="sector">
+               <rewrite from="mining energy use" to="industry"/>
+               <rewrite from="trn_pass_road_LDV_4W" to="transportation"/>
+               <rewrite from="trn_pass_road_LDV_2W" to="transportation"/>
+               <rewrite from="process heat primary metals" to="industry"/>
+               <rewrite from="resid other appliances" to="building"/>
+               <rewrite from="comm heating" to="building"/>
+               <rewrite from="industrial energy use" to="industry"/>
+               <rewrite from="comm cooling" to="building"/>
+               <rewrite from="trn_pass_road_LDV" to="transportation"/>
+               <rewrite from="process heat general" to="industry"/>
+               <rewrite from="other end uses" to="industry"/>
+               <rewrite from="trn_aviation_intl" to="transportation"/>
+               <rewrite from="resid hot water" to="building"/>
+               <rewrite from="limestone feedstocks" to=""/>
+               <rewrite from="resid heating" to="building"/>
+               <rewrite from="process heat cement" to="industry"/>
+               <rewrite from="comm other" to="building"/>
+               <rewrite from="comm office" to="building"/>
+               <rewrite from="feedstocks construction" to="industry"/>
+               <rewrite from="boilers pulp paper and wood" to="industry"/>
+               <rewrite from="boilers general" to="industry"/>
+               <rewrite from="industrial feedstocks" to="industry"/>
+               <rewrite from="comm ventilation" to="building"/>
+               <rewrite from="trn_shipping_intl" to="transportation"/>
+               <rewrite from="trn_pass_road" to="transportation"/>
+               <rewrite from="trn_freight_road" to="transportation"/>
+               <rewrite from="comm lighting" to="building"/>
+               <rewrite from="trn_freight" to="transportation"/>
+               <rewrite from="comm others" to="building"/>
+               <rewrite from="machine drive" to="industry"/>
+               <rewrite from="resid appliances" to="building"/>
+               <rewrite from="resid other" to="building"/>
+               <rewrite from="comm cooking" to="building"/>
+               <rewrite from="comm hot water" to="building"/>
+               <rewrite from="feedstocks chemicals" to="industry"/>
+               <rewrite from="electrochemical" to="industry"/>
+               <rewrite from="cement" to="industry"/>
+               <rewrite from="trn_pass" to="transportation"/>
+               <rewrite from="agriculture energy use" to="industry"/>
+               <rewrite from="feedstocks primary metals" to="industry"/>
+               <rewrite from="N fertilizer" to="industry"/>
+               <rewrite from="resid others" to="building"/>
+               <rewrite from="construction energy use" to="industry"/>
+               <rewrite from="resid cooling" to="building"/>
+               <rewrite from="comm refrigeration" to="building"/>
+               <rewrite from="resid lighting" to="building"/>
+            </level>
+         </labelRewriteList>
+      </supplyDemandQuery>
+</aQuery>
+
+<aQuery>
+<supplyDemandQuery title="Final energy by aggregate end-use sector and fuel">
+         <axis1 name="sector">sector</axis1>
+         <axis2 name="Year">demand-physical[@vintage]</axis2>
+         <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and ((@name='building' or @name='industry' or @name='transportation') or (exists(child::keyword/@final-energy)))]//*[@type='input' and not(@name='trn_pass_road' or @name='limestone' or @name='process heat cement' or @name='industrial energy use' or @name='industrial feedstocks' or @name='renewable' or @name='oil-credits')]/demand-physical[@unit='EJ']/node()</xPath>
+         <comments/>
+         <labelRewriteList append-values="false">
+            <level name="sector">
+               <rewrite from="mining energy use" to="industry"/>
+               <rewrite from="trn_pass_road_LDV_4W" to="transportation"/>
+               <rewrite from="trn_pass_road_LDV_2W" to="transportation"/>
+               <rewrite from="process heat primary metals" to="industry"/>
+               <rewrite from="resid other appliances" to="building"/>
+               <rewrite from="comm heating" to="building"/>
+               <rewrite from="industrial energy use" to="industry"/>
+               <rewrite from="comm cooling" to="building"/>
+               <rewrite from="trn_pass_road_LDV" to="transportation"/>
+               <rewrite from="process heat general" to="industry"/>
+               <rewrite from="other end uses" to="industry"/>
+               <rewrite from="trn_aviation_intl" to="transportation"/>
+               <rewrite from="resid hot water" to="building"/>
+               <rewrite from="limestone feedstocks" to=""/>
+               <rewrite from="resid heating" to="building"/>
+               <rewrite from="process heat cement" to="industry"/>
+               <rewrite from="comm other" to="building"/>
+               <rewrite from="comm office" to="building"/>
+               <rewrite from="feedstocks construction" to="industry"/>
+               <rewrite from="boilers pulp paper and wood" to="industry"/>
+               <rewrite from="boilers general" to="industry"/>
+               <rewrite from="industrial feedstocks" to="industry"/>
+               <rewrite from="comm ventilation" to="building"/>
+               <rewrite from="trn_shipping_intl" to="transportation"/>
+               <rewrite from="trn_pass_road" to="transportation"/>
+               <rewrite from="trn_freight_road" to="transportation"/>
+               <rewrite from="comm lighting" to="building"/>
+               <rewrite from="trn_freight" to="transportation"/>
+               <rewrite from="comm others" to="building"/>
+               <rewrite from="machine drive" to="industry"/>
+               <rewrite from="resid appliances" to="building"/>
+               <rewrite from="resid other" to="building"/>
+               <rewrite from="comm cooking" to="building"/>
+               <rewrite from="comm hot water" to="building"/>
+               <rewrite from="feedstocks chemicals" to="industry"/>
+               <rewrite from="electrochemical" to="industry"/>
+               <rewrite from="cement" to="industry"/>
+               <rewrite from="trn_pass" to="transportation"/>
+               <rewrite from="agriculture energy use" to="industry"/>
+               <rewrite from="feedstocks primary metals" to="industry"/>
+               <rewrite from="N fertilizer" to="industry"/>
+               <rewrite from="resid others" to="building"/>
+               <rewrite from="construction energy use" to="industry"/>
+               <rewrite from="resid cooling" to="building"/>
+               <rewrite from="comm refrigeration" to="building"/>
+               <rewrite from="resid lighting" to="building"/>
+            </level>
+            <level name="input">
+               <rewrite from="elect_td_bld" to="5 electricity"/>
+               <rewrite from="wholesale gas" to="2 gas"/>
+               <rewrite from="traditional biomass" to="7 trad biomass"/>
+               <rewrite from="refined liquids enduse" to="1 liquids"/>
+               <rewrite from="H2 enduse" to="6 hydrogen"/>
+               <rewrite from="elect_td_ind" to="5 electricity"/>
+               <rewrite from="delivered biomass" to="4 biomass"/>
+               <rewrite from="elect_td_trn" to="5 electricity"/>
+               <rewrite from="delivered coal" to="3 coal"/>
+               <rewrite from="refined liquids industrial" to="1 liquids"/>
+               <rewrite from="delivered gas" to="2 gas"/>
+            </level>
+         </labelRewriteList>
+      </supplyDemandQuery>
+</aQuery>
+<aQuery>
+<supplyDemandQuery title="Primary Energy Consumption (Direct Equivalent)">
+         <axis1 name="fuel">input[@name]</axis1>
+         <axis2 name="Year">demand-physical[@vintage]</axis2>
+         <xPath buildList="true" dataName="input" group="false" sumAll="false"><![CDATA[
+			 	 	 declare function local:append-heirarchy($parent as node(), $append as node()) as node() {
+			 	 		 let $scn := $parent/ancestor::scenario,
+			 			   	  $rgn := $parent/ancestor::region
+			 			   return
+			 			   	  document { element scenario {
+			 			 	  					$scn/@*,
+			 			 						element region {
+			 			 							$rgn/@*,
+			 			 							$append
+			 			 						}
+			 			 	  				}
+			 				}
+			 	 	 };  
+			 	 	 declare function local:get-primary-renewable($outputs as node()*) as node()* {
+			 	 	 unordered { 	
+			 	 	 for $output in $outputs 
+			 	 	 let $new_output :=  
+			 	 	 element input {
+			 	 		 attribute type {'input'},
+			 	 		 attribute name {$output/parent::*/following-sibling::keyword/@primary-renewable},
+			 	 		 element demand-physical {
+			 	 			 attribute vintage {$output/@vintage},
+			 	 			 attribute unit {$output/@unit},
+			 	 			 text { $output }
+			 	 		 }
+			 	 	 },
+			 	 	 $new_root := local:append-heirarchy($output/parent::*/parent::*, $new_output)
+			 	 	 return $new_root//text()
+			 	 	 } 
+			 	 	 };
+			 	 	 declare function local:run-primary-energy($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* { 	
+			 	 	 let $regionsG := if(not($regions[1] = 'Global'))
+			 	 	 		  then $regions
+			 	 	 		  else distinct-values(collection($collection)/scenario/world/*[@type='region']/@name)
+			 	 	 return
+			 	 	 for $scenario in $scenarios, 	    
+			 	 	 $region in $regionsG 	
+			 	 	 let $scenario_split := tokenize($scenario, ' '), 	    
+                     $scenario_name := string-join($scenario_split[position() < last()], ' '),
+			 	 	 $scenario_date := $scenario_split[last()],
+			 	 	 $currTree := collection($collection)/scenario[@name = $scenario_name and @date = $scenario_date]/world/*[@type = 'region' and @name=$region]
+			 	 	 return (: get renewables from electricity :)
+					 	 	 	local:get-primary-renewable($currTree/supplysector[@name='electricity' or @name='elect_td_bld']//keyword[fn:exists(@primary-renewable)]/preceding-sibling::output-primary/physical-output)
+					 		 	| (: get renewables from H2ProdCS :)
+					 	 	 	local:get-primary-renewable($currTree/supplysector[@name='H2 central production'](: /*[@type='subsector' (: collapse :) and fn:not(@name='electrolysis')] :)//keyword[fn:exists(@primary-renewable)]/preceding-sibling::output-primary/physical-output)
+					 	 	 	| (: get renewables from H2ProdDist :)
+					 	 	 	local:get-primary-renewable($currTree/supplysector[@name='H2 forecourt production'](: /*[@type='subsector' (: collapse :) and fn:not(@name='electrolysis')] :)//keyword[fn:exists(@primary-renewable)]/preceding-sibling::output-primary/physical-output)
+					 	 	 	| (: get the primaries :)
+	 	 						$currTree//keyword[fn:exists(@primary-consumption)]/preceding-sibling::input-energy/demand-physical/text()
+                                | (: get traditional biomass :)
+							    $currTree//*[@type='input' and @name='traditional biomass']/demand-physical/node()
+			 	 	 	
+	 	 }; 
+            	 local:run-primary-energy((:scenarios:), (:regions:), (:collection:))
+             ]]></xPath>
+         <comments/>
+         <labelRewriteList append-values="false">
+            <level name="input">
+               <rewrite from="exotic-elect" to="j breakthrough"/>
+               <rewrite from="wind-H2" to="g wind"/>
+               <rewrite from="biomass" to="d biomass"/>
+               <rewrite from="traditional biomass" to="j traditional biomass"/>
+               <rewrite from="crude oil" to="a oil"/>
+               <rewrite from="nuclear-elect" to="e nuclear"/>
+               <rewrite from="solar-H2" to="h solar"/>
+               <rewrite from="regional natural gas" to=""/>
+               <rewrite from="traded unconventional oil" to="a oil"/>
+               <rewrite from="geothermal-elect" to="i geothermal"/>
+               <rewrite from="natural gas" to="b natural gas"/>
+               <rewrite from="hydro-elect" to="f hydro"/>
+               <rewrite from="solar-elect" to="h solar"/>
+               <rewrite from="coal" to="c coal"/>
+               <rewrite from="elect_td_ind" to=""/>
+               <rewrite from="wind-elect" to="g wind"/>
+               <rewrite from="nuclear-H2" to="e nuclear"/>
+               <rewrite from="k new" to="k new"/>
+            </level>
+         </labelRewriteList>
+      </supplyDemandQuery>
+      <supplyDemandQuery title="Primary energy with CCS (Direct Equivalent)">
+         <axis1 name="fuel">input[@name]</axis1>
+         <axis2 name="Year">demand-physical[@vintage]</axis2>
+         <xPath buildList="true" dataName="input" group="false" sumAll="false"><![CDATA[
+               declare function local:append-heirarchy($parent as node(), $append as node()*) as node() {
+	       	 		 let $scn := $parent/ancestor::scenario,
+	       			   	  $rgn := $parent (: /ancestor::region :)
+	       			   return
+	       			   	  document { element scenario {
+	       			 	  					$scn/@*,
+	       			 						element region {
+	       			 							$rgn/@*,
+	       			 							$append
+	       			 						}
+	       			 	  				}
+	       				}
+	       	 		 (: I can get by with just the scenario and region
+	       			 let $new_node := element {local-name($parent)} {$parent/@*, $append} 	
+	       	 		 return
+	       	 		 if(local-name($parent) != 'scenario')
+	       	 		 then local:append-heirarchy($parent/parent::*, $new_node)
+	       	 		 else document { $new_node } :)
+	       	 	 }; 
+	       	 	 declare function local:generate-sector-input-coefs($outputNameQueue as xs:string*, $currTree as node(), $coefs as node()*, $is_usa as xs:boolean) as node()* {
+                 if(empty($outputNameQueue)) then $coefs
+                 else if( exists($coefs[@name = $outputNameQueue[1]]) or exists(index-of(('biomass',
+'traded unconventional oil', 'regional corn for ethanol', 'regional biomassOil', 'regional sugar for ethanol', 'regional sugarbeet for ethanol'),
+$outputNameQueue[1])) or not($currTree/*[@type='sector' and @name=$outputNameQueue[1]]))
+then 
+(:if(not($is_usa) and string-length($currTree/@name) = 2) then
+local:trace-inputs($outputName, $currTree/parent::*/*[@type='region' and @name='USA'], $outputs, true())
+else:)
+local:generate-sector-input-coefs(remove($outputNameQueue, 1), $currTree, $coefs, $is_usa)
+	       				else
+                    let $outputName := $outputNameQueue[1],
+                        $newOutputNameQueue := remove($outputNameQueue, 1),
+                        $useOutputs := $currTree//output-primary[@type='output' and @name=$outputName],
+                        $useInputs := for $out in $useOutputs[not(following-sibling::keyword[exists(@primary-renewable)])]
+                                      return $out/following-sibling::*[@type='input' and not(@name='oil-credits')],
+                        $renewOutputs := for $out in $useOutputs[following-sibling::keyword[exists(@primary-renewable)]]
+                                         return element output {
+                                             attribute name { $out/following-sibling::keyword/@primary-renewable },
+                                             $out/child::*
+                                         },
+                        $totalOutputSum := for $vintage in distinct-values($useOutputs/physical-output/@vintage)
+                                          return element output {
+                                                     attribute vintage { $vintage },
+                                                     text {
+                                                         sum($useOutputs/physical-output[@vintage=$vintage])
+                                                     }
+                                                 },
+                       $new_coefs := $coefs | element sector {
+                                            attribute name { $outputName },
+                                            for $input in distinct-values($useInputs/@name)
+                                            return element input {
+                                                       attribute name { $input },
+                                                       for $outputSum in $totalOutputSum
+                                                       let $inputSum := sum($useInputs[@name=$input]/demand-physical[@vintage=$outputSum/@vintage])
+                                                       where $inputSum > 0
+                                                       return element coef {
+                                                                  attribute vintage { $outputSum/@vintage },
+                                                                  text { $inputSum div $outputSum }
+                                                              }
+                                                    },
+                                            for $input in distinct-values($renewOutputs/@name)
+                                            return element input {
+                                                       attribute name { concat($input, ' renewable') },
+                                                       attribute is-renewable { true() },
+                                                       for $outputSum in $totalOutputSum
+                                                       let $inputSum := sum($renewOutputs[@name=$input]/physical-output[@vintage=$outputSum/@vintage])
+                                                       where $inputSum > 0
+                                                       return element coef {
+                                                                  attribute vintage { $outputSum/@vintage },
+                                                                  text { $inputSum div $outputSum }
+                                                              }
+                                                    }
+                                        }
+                        return 
+                              local:generate-sector-input-coefs(distinct-values(($newOutputNameQueue, $useInputs/@name)), $currTree, $new_coefs, $is_usa)
+		};
+        declare function local:generate-ccs-coefs($currTree as node(), $coefs as node()*) as node()* {
+            for $sector in $coefs/@name
+            let $currSector := $currTree/*[@type='sector' and @name=$sector],
+                $useInputs := $currSector//*[@type='technology' and not(contains(@name, 'CCS')) and not(child::keyword/@primary-renewable)]/*[@type='input' and not(@name = 'oil-credits')],
+                $useInputsCCS := $currSector//*[@type='technology' and contains(@name, 'CCS')]/*[@type='input' and not(@name='oil-credits')],
+                $totalOutputSum := for $vintage in distinct-values($useInputs/demand-physical/@vintage | $useInputsCCS/demand-physical/@vintage)
+                                          return element output {
+                                                     attribute vintage { $vintage },
+                                                     text {
+                                                         sum($currSector//output-primary/physical-output[@vintage=$vintage])
+                                                     }
+                                                 }
+            return if(exists($useInputsCCS)) then
+                element sector {
+                                            attribute name { $sector },
+                                            $coefs[@name=$sector]/input[@is-renewable],
+                                            for $input in distinct-values(($useInputs/@name, $useInputsCCS/@name))
+                                            return element input {
+                                                       attribute name { $input },
+                                                       for $outputSum in $totalOutputSum
+                                                       let $inputSum := sum($useInputs[@name=$input]/demand-physical[@vintage=$outputSum/@vintage]),
+                                                           $inputSumCCS := sum($useInputsCCS[@name=$input]/demand-physical[@vintage=$outputSum/@vintage])
+                                                       return (element coef {
+                                                                  attribute vintage { $outputSum/@vintage },
+                                                                  text { $inputSum div $outputSum }
+                                                              },
+                                                              element coef_ccs {
+                                                                  attribute vintage { $outputSum/@vintage },
+                                                                  text { $inputSumCCS div $outputSum }
+                                                              })
+                                                    }
+                                        }
+                    else
+                        $coefs[@name=$sector]
+        };
+        declare function local:apply-coefs($outputName as xs:string, $outputs as node()*, $coefs as node()*, $isCCS as xs:boolean) as node()* {
+            if(exists($coefs[@name=$outputName]) and sum($outputs) > 0.001) then
+                for $input in $coefs[@name=$outputName]/input
+                return local:apply-coefs($input/@name,
+                    for $vintage in distinct-values($outputs/@vintage)
+                    let $outputThisVintage := $outputs[@vintage=$vintage],
+                        $firstOutput := $outputThisVintage[1],
+                        $outputSum := sum($outputThisVintage),
+                        $coefThisVintage := $input/coef[@vintage=$vintage]
+                    where $coefThisVintage > 0
+	       		    return element { local-name($firstOutput) } {
+	       				$firstOutput/@*,
+                        text{ $outputSum * $coefThisVintage }
+                        }, $coefs, $isCCS)
+                    | local:apply-coefs($input/@name,
+                    for $vintage in distinct-values($outputs/@vintage)
+                    let $outputThisVintage := $outputs[@vintage=$vintage],
+                        $firstOutput := $outputThisVintage[1],
+                        $outputSum := sum($outputThisVintage),
+                        $coefThisVintage := $input/coef_ccs[@vintage=$vintage]
+                    where exists($coefThisVintage) and $coefThisVintage > 0
+	       		    return element { local-name($firstOutput) } {
+	       				$firstOutput/@*,
+                        text{ $outputSum * $coefThisVintage }
+	       			}, $coefs, true())
+            else if( sum($outputs) > 0.001) then
+                element input {
+                    attribute name { if($isCCS) then concat($outputName, ' CCS') else $outputName },
+                    attribute type { 'input' },
+                    (: $outputs :) (: TODO: not sure why this doesn't work and we need to create these explicitly :)
+                    for $o in $outputs
+                    return element demand-physical { $o/@*, text{ $o/text() } }
+                }
+            else
+                (: These are the residuals from chasing simulenaties, I've left this here
+                   for debuging purposes :)
+                element input {
+                    attribute name { $outputName },
+                    attribute type { 'input' } (:,
+                    $outputs :)
+                }
+        };
+		declare function local:run-input-by-primary($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* { 	
+			 	 unordered { 	
+			 	 let $regionsG := if(not($regions[1] = 'Global'))
+			 	 		  then $regions
+			 	 		  else distinct-values(collection($collection)/scenario/world/*[@type='region']/@name)
+			 	 return
+			 	 for $scenario in $scenarios, 	    
+			 	 $region in $regionsG 	
+			 	 let $scenario_split := tokenize($scenario, ' '), 	    
+				 $currTree := collection($collection)/scenario[@name = $scenario_split[1] and @date = $scenario_split[2]]/world/*[@type='region' and @name=$region],
+                 $currInputs := $currTree/*[@type='sector' and (@name='unconventional oil production' or exists(child::keyword/@final-energy))]//*[@type='input' and empty(index-of(('trn_pass_road', 'limestone', 'process heat cement', 'industrial energy use', 'industrial feedstocks', 'renewable', 'trn_freight_road', 'trn_pass_road_LDV', 'trn_pass_road_LDV_2W', 'trn_pass_road_LDV_4W', 'unconventional oil', 'oil-credits'), @name))],
+                 $coefs := local:generate-sector-input-coefs(distinct-values($currInputs/@name), $currTree, (), false()),
+                 $ccs_coefs := local:generate-ccs-coefs($currTree, $coefs)
+				 return 
+				    for $inputName in distinct-values($currInputs/@name)
+				    return local:append-heirarchy($currTree, local:apply-coefs($inputName, $currInputs[@name=$inputName]/demand-physical, $ccs_coefs, false()))//text()
+			 	 } 
+	 	 };
+		 local:run-input-by-primary((:scenarios:), (:regions:), (:collection:))
+         ]]></xPath>
+         <comments>WARNING: Results are slightly inflated due to improper secondary-output accounting</comments>
+         <labelRewriteList append-values="false">
+            <level name="input">
+               <rewrite from="traditional biomass" to="j traditional biomass"/>
+               <rewrite from="regional corn for ethanol" to="d biomass"/>
+               <rewrite from="geothermal-elect renewable" to="i geothermal"/>
+               <rewrite from="coal CCS" to="c coal CCS"/>
+               <rewrite from="regional biomassOil" to="d biomass"/>
+               <rewrite from="wind-elect renewable CCS" to="g wind"/>
+               <rewrite from="crude oil CCS" to="a oil CCS"/>
+               <rewrite from="regional corn for ethanol CCS" to="d biomass CCS"/>
+               <rewrite from="wind-H2 renewable" to="g wind"/>
+               <rewrite from="hydro-elect renewable CCS" to="f hydro"/>
+               <rewrite from="regional biomassOil CCS" to="d biomass CCS"/>
+               <rewrite from="regional sugar for ethanol CCS" to="d biomass CCS"/>
+               <rewrite from="limestone" to=""/>
+               <rewrite from="traded unconventional oil CCS" to="a oil CCS"/>
+               <rewrite from="biomass CCS" to="d biomass CCS"/>
+               <rewrite from="elect_td_ind" to=""/>
+               <rewrite from="geothermal-elect renewable CCS" to="i geothermal"/>
+               <rewrite from="wind-elect renewable" to="g wind"/>
+               <rewrite from="exotic-elect" to="j breakthrough"/>
+               <rewrite from="hydro-elect renewable" to="f hydro"/>
+               <rewrite from="nuclear-H2 renewable" to="e nuclear"/>
+               <rewrite from="biomass" to="d biomass"/>
+               <rewrite from="crude oil" to="a oil"/>
+               <rewrite from="nuclear-elect renewable" to="e nuclear"/>
+               <rewrite from="solar-elect renewable CCS" to="h solar"/>
+               <rewrite from="regional natural gas" to=""/>
+               <rewrite from="natural gas CCS" to="b natural gas CCS"/>
+               <rewrite from="traded unconventional oil" to="a oil"/>
+               <rewrite from="geothermal-elect" to="i geothermal"/>
+               <rewrite from="regional sugar for ethanol" to="d biomass"/>
+               <rewrite from="natural gas" to="b natural gas"/>
+               <rewrite from="solar-elect renewable" to="h solar"/>
+               <rewrite from="regional sugarbeet for ethanol" to="d biomass"/>
+               <rewrite from="solar-H2 renewable" to="h solar"/>
+               <rewrite from="renewable" to=""/>
+               <rewrite from="coal" to="c coal"/>
+               <rewrite from="wind-elect" to="g wind"/>
+               <rewrite from="nuclear-elect renewable CCS" to="e nuclear"/>
+            </level>
+         </labelRewriteList>
+      </supplyDemandQuery>
+</aQuery>
+</queries>

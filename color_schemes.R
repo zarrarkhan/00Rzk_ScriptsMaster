@@ -221,10 +221,6 @@ pie(rep(1,length(colorsX_Basic)),label=names(colorsX_Basic),col=colorsX_Basic)
 colorsX_Gas<<-c("gas (CC CCS)"="black","gas (CT)"="red","gas (steam)"="green3","gas (CC)"="blue","cyan","magenta","yellow","gray")
 pie(rep(1,length(colorsX_Gas)),label=names(colorsX_Gas),col=colorsX_Gas)
 
-# Gas Colors
-colorsX_Gas<<-c("gas (CC CCS)"="black","gas (CT)"="red","gas (steam)"="green3","gas (CC)"="blue","cyan","magenta","yellow","gray")
-pie(rep(1,length(colorsX_Basic)),label=names(colorsX_Basic),col=colorsX_Basic)
-
 
 colorsX_Diff<<-c("#693C01", "#815A3D", "#9C7D6A", "#BDA89D",
                  "white",

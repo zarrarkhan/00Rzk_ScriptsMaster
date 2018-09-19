@@ -121,7 +121,7 @@ connx<<- localDBConn(wddb, myDB)    # Connect to database
 if(reReadData==1){
 if(file.exists("queryData.proj")){file.remove("queryData.proj")} # Delete old project file
 for (scenario_i in scenariosComp){
-queryData.proj<<-addScenario(conn=connx, proj="queryData.proj",scenario=scenario_ix,queryFile=paste(wdScripts,'/analysis_queriesIDB.xml',sep=""))  # Check your queries file
+queryData.proj<<-addScenario(conn=connx, proj="queryData.proj",scenario=scenario_i,queryFile=paste(wdScripts,'/analysis_queriesIDB.xml',sep=""))  # Check your queries file
 }}else{
 queryData.proj<<-loadProject("queryData.proj")  # Use already saved database
 }
@@ -181,6 +181,7 @@ shp_HydroBasinsLev3<<-spTransform(shp_HydroBasinsLev3, CRS(projX))
 shp_HydroBasinsLev4<<-spTransform(shp_HydroBasinsLev4, CRS(projX))
 shp_gadm36L1<<-spTransform(shp_gadm36L1, CRS(projX))
 
+# Simplify polygons
 # https://gis.stackexchange.com/questions/163445/getting-topologyexception-input-geom-1-is-invalid-which-is-due-to-self-intersec
 shp_HydroBasinsLev4 <- gBuffer(shp_HydroBasinsLev4, byid=TRUE, width=0)
 shp_HydroBasinsLev4<<-spTransform(shp_HydroBasinsLev4, CRS(projX))
@@ -229,7 +230,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_ix,
     # Crop to the Regional file shpa boundary
     df2<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
     dfxtra<-raster::intersect(df1,b1);plot(dfxtra) #create larger boundary extents for plotting in tmap
-    df3<-df2
+    df3<<-df2
     gridded(df3)<-TRUE  # Create Gridded Raster Data
     gridded(dfxtra)<-TRUE
     dfxtra<<-dfxtra
@@ -242,7 +243,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_ix,
     #----- For each year compare Demands by Sector
     #---------------------------------------------
     
-    dfx<-df3
+    dfx<<-df3
     dfx@data<-subset(dfx@data,select=c(unique(df$Type)))  # Choose the Sectors
     if(!is.null(moduleRemove)){dfx@data<-dfx@data%>%dplyr::select(-moduleRemove)}
     
@@ -270,7 +271,7 @@ maps_ReAggregate <<- function(region_i=region_i,scenario_i=scenario_ix,
     #----- For each year compare Demands by Sector Free Scale
     #---------------------------------------------
     
-    dfx<-df3
+    dfx<<-df3
     dfx@data<-subset(dfx@data,select=c(unique(df$Type)))  # Choose the Sectors
     #dfx@data<-subset(dfx@data,select=-c(Total))  # Remove
     
@@ -639,7 +640,7 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     df2<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
     dfxtra<<-raster::intersect(df1,b1);plot(dfxtra) #create larger boundary extents for plotting in tmap
     gridded(dfxtra)<-TRUE
-    df3<-df2
+    df3<<-df2
     gridded(df3)<-TRUE # Create Gridded Data
     dfxtra<<-dfxtra
     
@@ -716,12 +717,12 @@ write.csv(dxpbysubBasin,file=paste(dir,"/subBasin/table_",moduleName,"_",region_
     df2<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
     dfxtra<<-raster::intersect(df1,b1);plot(dfxtra) #create larger boundary extents for plotting in tmap
     gridded(dfxtra)<-TRUE
-    df3<-df2
+    df3<<-df2
     gridded(df3)<-TRUE # Create Gridded Data
     dfxtra<<-dfxtra
     
     years<-yearsOriginal;
-    dfx<-df3
+    dfx<<-df3
     dfx@data<-subset(dfx@data,select=c(years))  # Choose the years
     dfx@data<-dfx@data%>%dplyr::select(-contains("Mean"))  # Remove mean year
     
@@ -1636,7 +1637,8 @@ dfCOL<-df%>%filter(region=="Colombia",x>=2010,x<=2030)%>%
                              x==2025~448.968,
                              x==2030~523.254),
          value=NewValue)
-df<-rbind.data.frame(df,dfCOL)
+dfCOLx<-dfCOL[complete.cases(dfCOL),]
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 dfgdp<-df
 
@@ -1690,9 +1692,116 @@ dfCOL<-df%>%filter(region=="Colombia",x>=2015,x<=2030)%>%
                              x==2020~50.22,
                              x==2025~51.854,
                              x==2030~53.134),
-         value=NewValue)
-df<-rbind.data.frame(df,dfCOL)
+         value=NewValue);
+dfCOLx<-dfCOL[complete.cases(dfCOL),]
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
+
+# Ag production by tech
+tbl <- getQuery(queryData.proj, "ag production by tech") # Tibble 
+df<-as.data.frame(tbl); head(df)             # Data frame
+df<-df%>%mutate(Type=case_when(grepl("IRR",technology)~"irrigation",
+                                grepl("RFD",technology)~"rainfed",
+                               TRUE~"NA"))
+df<-df%>%filter(region==region_i)
+#df$technology<-"Technology"
+#df$sector<-"Sector"
+df$vintage<-paste("Vint_",df$year,sep=""); 
+df$param<-"agProdbyIrrRfd"; head(df) 
+df$Query<-"ag production by tech"
+df$Title<-"Irrigated vs Rainfed Agricultural Production"
+df$NewValue<-df$value
+df$NewUnits<-"Ag~Production~(billion~m^3)"  # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
+df$segment<-"Segment"
+df<-df %>% mutate (Fill1=sector,
+                   FillLabel1=sector,
+                   FillPalette1="colorsX_Basic",
+                   Fill2=Type,
+                   FillLabel2=Type,
+                   FillPalette2="colorsX_Basic") %>%  
+  subset(.,select=-c(sector,subsector,Type,technology, output));
+df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
+
+
+# land allocation by crop and water source
+tbl <- getQuery(queryData.proj, "land allocation by crop and water source") # Tibble 
+df<-as.data.frame(tbl); head(df)             # Data frame
+df<-df%>%filter(region==region_i)
+#df$technology<-"Technology"
+#df$sector<-"Sector"
+df$vintage<-paste("Vint_",df$year,sep=""); 
+df$param<-"landIrrRfd"; head(df) 
+df$Query<-"land allocation by crop and water source"
+df$Title<-"Irrigated vs Rainfed Land Allocation"
+df$NewValue<-df$value
+df$NewUnits<-"Land~Allocation~(1000~km^2)"  # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
+df$segment<-"Segment"
+df<-df %>% mutate (Fill1=crop,
+                   FillLabel1=crop,
+                   FillPalette1="colorsX_Basic",
+                   Fill2=water,
+                   FillLabel2=water,
+                   FillPalette2="colorsX_Basic") %>%  
+  subset(.,select=-c(crop,water));
+df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
+
+
+# biophysical water demand by crop type and land region
+tbl <- getQuery(queryData.proj, "biophysical water demand by crop type and land region") # Tibble 
+df<-as.data.frame(tbl); head(df)             # Data frame
+df<-df%>%filter(region==region_i)
+#df$technology<-"Technology"
+#df$sector<-"Sector"
+df$vintage<-paste("Vint_",df$year,sep=""); 
+df$param<-"watBioPhysCons"; head(df) 
+df$Query<-"biophysical water demand by crop type and land region"
+df$Title<-"Biophysical water consumption"
+df$NewValue<-df$value
+df$NewUnits<-"Biophysical~Water~Consumption~(km^3)"  # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
+df$segment<-"Segment"
+df<-df %>% mutate (Fill1=subsector,
+                   FillLabel1=subsector,
+                   FillPalette1="colorsX_Unassigned",
+                   Fill2=sector,
+                   FillLabel2=sector,
+                   FillPalette2="colorsX_Unassigned") %>%  
+  subset(.,select=-c(input,sector,subsector));
+df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
+
+
+tbl <- getQuery(queryData.proj, "land allocation by crop and water source") # Tibble 
+df<-as.data.frame(tbl); head(df)             # Data frame
+df<-df%>%filter(region==region_i)
+#df$technology<-"Technology"
+#df$sector<-"Sector"
+df$vintage<-paste("Vint_",df$year,sep=""); 
+df$param<-"landIrrRfd"; head(df) 
+df$Query<-"land allocation by crop and water source"
+df$Title<-"Irrigated vs Rainfed Land Allocation"
+df$NewValue<-df$value
+df$NewUnits<-"Land~Allocation~(1000~km^2)"  # Use ~ for spaces. Will be parsed later
+df$x<-df$year
+df$xLabel<-"Year"
+df$Aggregate<-"sum"  # How to aggregate over spatial and temporal units
+df$segment<-"Segment"
+df<-df %>% mutate (Fill1=crop,
+                   FillLabel1=crop,
+                   FillPalette1="colorsX_Basic",
+                   Fill2=water,
+                   FillLabel2=water,
+                   FillPalette2="colorsX_Basic") %>%  
+  subset(.,select=-c(crop,water));
+df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
+
 
 # Primary energy consumption by region (direct equivalent)
 tbl <- getQuery(queryData.proj, "primary energy consumption by region (direct equivalent)") # Tibble 
@@ -1743,7 +1852,7 @@ df<-df %>% mutate (Fill1="Fill1",
 # Add Local Data For Comparison
 # Add data for Existing Variables & Years
 dfCOL<-data.frame()
-dfCOL<-df%>%filter(region=="Colombia",x>=2020,x<=2030)%>%
+dfCOL<-df%>%filter(region=="Colombia",x>=2005,x<=2030)%>%
   dplyr::select(-value,-NewValue,-scenario)%>%unique%>%
   mutate(scenario="LocalData",
          Query="R.Delgado_UN",
@@ -1759,67 +1868,68 @@ dfCOL<-df%>%filter(region=="Colombia",x>=2020,x<=2030)%>%
                              (x==2030 & Fill2=="a Coal")~8.64,
                              (x==2030 & Fill2=="c Gas")~2.16,
                              (x==2030 & Fill2=="k Hydro")~98.18,
-                             (x==2006 & Fill2=="e Oil")~0.0159,
-                             (x==2006 & Fill2=="c Gas")~6.8701,
-                             (x==2006 & Fill2=="b Coal")~2.588,
-                             (x==2006 & Fill2=="k Hydro")~4.02534,
-                             (x==2007 & Fill2=="e Oil")~0.0198,
-                             (x==2007 & Fill2=="c Gas")~6.117.9,
-                             (x==2007 & Fill2=="b Coal")~2.903,
-                             (x==2007 & Fill2=="k Hydro")~4.17952,
-                             (x==2008 & Fill2=="e Oil")~0.0145,
-                             (x==2008 & Fill2=="c Gas")~5.231,
-                             (x==2008 & Fill2=="b Coal")~2.4868,
-                             (x==2008 & Fill2=="k Hydro")~4.3520,
-                             (x==2009 & Fill2=="e Oil")~0.3754,
-                             (x==2009 & Fill2=="c Gas")~10.4172,
-                             (x==2009 & Fill2=="b Coal")~3.6951,
-                             (x==2009 & Fill2=="k Hydro")~3.87138,
-                             (x==2010 & Fill2=="e Oil")~0.483,
-                             (x==2010 & Fill2=="c Gas")~11.5451,
-                             (x==2010 & Fill2=="b Coal")~3.4646,
-                             (x==2010 & Fill2=="k Hydro")~3.80886,
-                             (x==2011 & Fill2=="e Oil")~0.111,
-                             (x==2011 & Fill2=="c Gas")~7.5962,
-                             (x==2011 & Fill2=="b Coal")~1.6269,
-                             (x==2011 & Fill2=="k Hydro")~4.52588,
-                             (x==2012 & Fill2=="e Oil")~0.203,
-                             (x==2012 & Fill2=="c Gas")~8.7113,
-                             (x==2012 & Fill2=="b Coal")~2.4926,
-                             (x==2012 & Fill2=="k Hydro")~4.49236,
-                             (x==2013 & Fill2=="e Oil")~0.3551,
-                             (x==2013 & Fill2=="c Gas")~10.9558,
-                             (x==2013 & Fill2=="b Coal")~5.5262,
-                             (x==2013 & Fill2=="k Hydro")~4.18359,
-                             (x==2014 & Fill2=="e Oil")~0.2932,
-                             (x==2014 & Fill2=="c Gas")~12.3693,
-                             (x==2014 & Fill2=="b Coal")~5.6302,
-                             (x==2014 & Fill2=="k Hydro")~4.21576,
-                             (x==2015 & Fill2=="e Oil")~1.5767,
-                             (x==2015 & Fill2=="c Gas")~12.8095,
-                             (x==2015 & Fill2=="b Coal")~6.245,
-                             (x==2015 & Fill2=="k Hydro")~4.24638,
-                             (x==2016 & Fill2=="e Oil")~2.0563,
-                             (x==2016 & Fill2=="c Gas")~10.3205,
-                             (x==2016 & Fill2=="b Coal")~5.3799,
-                             (x==2016 & Fill2=="k Hydro")~4.42461,
                              TRUE ~ NA_real_),
          value=NewValue);
 # Add new Factors if needed
 dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2006, NewValue=2.6126, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2007, NewValue=2.7894, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2008, NewValue=3.1418, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2009, NewValue=2.7641, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2010, NewValue=3.2061, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2011, NewValue=4.0292, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2012, NewValue=3.5592, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2013, NewValue=3.5220, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2014, NewValue=3.7645, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2015, NewValue=3.4535, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2011, NewValue=3.9378, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
+#dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2006 , Fill2="e Oil", NewValue =0.0159, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2006 , Fill2="c Gas", NewValue =6.8701,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2006 , Fill2="b Coal", NewValue =2.588,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2006 , Fill2="k Hydro", NewValue =4.02534,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2007 , Fill2="e Oil", NewValue =0.0198,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2007 , Fill2="c Gas", NewValue =6.1179,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2007 , Fill2="b Coal", NewValue =2.903,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2007 , Fill2="k Hydro", NewValue =4.17952,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2008 , Fill2="e Oil", NewValue =0.0145,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2008 , Fill2="c Gas", NewValue =5.231,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2008 , Fill2="b Coal", NewValue =2.4868,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2008 , Fill2="k Hydro", NewValue =4.3520,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2009 , Fill2="e Oil", NewValue =0.3754,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2009 , Fill2="c Gas", NewValue =10.4172,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2009 , Fill2="b Coal", NewValue =3.6951,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2009 , Fill2="k Hydro", NewValue =3.87138,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2010 , Fill2="e Oil", NewValue =0.483,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2010 , Fill2="c Gas", NewValue =11.5451,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2010 , Fill2="b Coal", NewValue =3.4646,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2010 , Fill2="k Hydro", NewValue =3.80886,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2011 , Fill2="e Oil", NewValue =0.111,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2011 , Fill2="c Gas", NewValue =7.5962,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2011 , Fill2="b Coal", NewValue =1.6269,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2011 , Fill2="k Hydro", NewValue =4.52588,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2012 , Fill2="e Oil", NewValue =0.203,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2012 , Fill2="c Gas", NewValue =8.7113,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2012 , Fill2="b Coal", NewValue =2.4926,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2012 , Fill2="k Hydro", NewValue =4.49236,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2013 , Fill2="e Oil", NewValue =0.3551,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2013 , Fill2="c Gas", NewValue =10.9558,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2013 , Fill2="b Coal", NewValue =5.5262,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2013 , Fill2="k Hydro", NewValue =4.18359,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2014 , Fill2="e Oil", NewValue =0.2932,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2014 , Fill2="c Gas", NewValue =12.3693,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2014 , Fill2="b Coal", NewValue =5.6302,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2014 , Fill2="k Hydro", NewValue =4.21576,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2015 , Fill2="e Oil", NewValue =1.5767,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2015 , Fill2="c Gas", NewValue =12.8095,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2015 , Fill2="b Coal", NewValue =6.245,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2015 , Fill2="k Hydro", NewValue =4.24638,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2016 , Fill2="e Oil", NewValue =2.0563,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2016 , Fill2="c Gas", NewValue =10.3205,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2016 , Fill2="b Coal", NewValue =5.3799,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(x=2016 , Fill2="k Hydro", NewValue =4.42461,value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2006, NewValue=2.6126, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2007, NewValue=2.7894, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2008, NewValue=3.1418, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2009, NewValue=2.7641, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2010, NewValue=3.2061, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2011, NewValue=4.0292, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2012, NewValue=3.5592, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2013, NewValue=3.5220, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2014, NewValue=3.7645, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2015, NewValue=3.4535, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Other",x=2011, NewValue=3.9378, value=NewValue))
+dfCOLx$year<-dfCOLx$x;dfCOLx$vintage<-paste("Vint_",dfCOLx$year,sep=""); 
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
 
@@ -1859,9 +1969,9 @@ dfCOL<-df%>%filter(region=="Colombia",x==2010)%>%
                              TRUE ~ NA_real_),
          value=NewValue);
 # Add new Factors if needed
-#dfCOLx<-dfCOL[complete.cases(dfCOL),]
-#dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
+dfCOLx<-dfCOL[complete.cases(dfCOL),]
+#dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
 tbl <- getQuery(queryData.proj, "water withdrawals by sector") # Tibble
@@ -1900,9 +2010,9 @@ dfCOL<-df%>%filter(region=="Colombia",x==2010)%>%
                              TRUE ~ NA_real_),
          value=NewValue);
 # Add new Factors if needed
-#dfCOLx<-dfCOL[complete.cases(dfCOL),]
-#dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
+dfCOLx<-dfCOL[complete.cases(dfCOL),]
+#dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
 tbl <- getQuery(queryData.proj, "water withdrawals by crop") # Tibble
@@ -2027,9 +2137,9 @@ dfCOL<-df1%>%filter(region=="Colombia",x>=2005,x<=2015)%>%
                              TRUE ~ NA_real_),
          value=NewValue);
 # Add new Factors if needed
-#dfCOLx<-dfCOL[complete.cases(dfCOL),]
-#dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
-df1<-rbind.data.frame(df1,dfCOL)
+dfCOLx<-dfCOL[complete.cases(dfCOL),]
+#dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Total",x=2020, NewValue=75.338, value=NewValue))
+df1<-rbind.data.frame(df1,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df1); head(df_allX)
 
 #No Psature
@@ -2103,7 +2213,7 @@ df <- df %>% mutate (vintage=paste("Vint_",year,sep=""),
                         xLabel="Year",
                         param="aggLandAlloc",
                         NewValue=value,
-                        NewUnits="Land~Allocation~(km^2)", # Use ~ for spaces. Will be parsed later
+                        NewUnits="Land~Allocation~(1000~km^2)", # Use ~ for spaces. Will be parsed later
                         Fill2=landleaf,
                         FillLabel2="Type",
                         FillPalette2="colorsX_Unassigned") %>%
@@ -2131,8 +2241,8 @@ dfCOL<-df%>%filter(region=="Colombia",x>=2005,x<=2015)%>%
          value=NewValue);
 # Add new Factors if needed
 dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Water",x=2010, NewValue=29, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
+dfCOLx<-rbind.data.frame(dfCOLx,dfCOL[1,]%>%mutate(Fill2="Water",x=2010, NewValue=29, value=NewValue))
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
 tbl <- getQuery(queryData.proj, "Land Use Change Emission (future)") # Tibble
@@ -2255,16 +2365,16 @@ dfCOL<-df%>%filter(region=="Colombia",(x==2005 | x==2010))%>%
          value=NewValue);
 # Add new Factors if needed
 dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2005, NewValue=56.873, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2005, NewValue=11.409, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2010, NewValue=73.634, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2010, NewValue=13.124, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2012, NewValue=78.015, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="industry",x=2012, NewValue=8.873, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="LUC_Absorption",x=2012, NewValue=-73.157, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="LUC_Emissions",x=2012, NewValue=158.597, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2012, NewValue=13.313, value=NewValue))
-df<-rbind.data.frame(df,dfCOL)
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2005, NewValue=56.873, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2005, NewValue=11.409, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2010, NewValue=73.634, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2010, NewValue=13.124, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="energy",x=2012, NewValue=78.015, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="industry",x=2012, NewValue=8.873, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="LUC_Absorption",x=2012, NewValue=-73.157, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="LUC_Emissions",x=2012, NewValue=158.597, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="waste",x=2012, NewValue=13.313, value=NewValue))
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 
 # GHG emissions by subsector
@@ -2331,13 +2441,13 @@ dfCOL<-df%>%filter(region=="Colombia",(x==2005 | x==2010))%>%
          value=NewValue);
 # Add new Factors if needed
 dfCOLx<-dfCOL[complete.cases(dfCOL),]
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="CO2",x=2012, NewValue=185.64, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="CH4",x=2012, NewValue=35, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="N2O",x=2012, NewValue=20, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="HFCs",x=2012, NewValue=2, value=NewValue))
-dfCOL<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="SF6",x=2012, NewValue=2, value=NewValue))
-dfCOL<-dfCOL%>%mutate(Fill1="Fill1",FillLabel1="FillLabel1",segment="segment")
-df<-rbind.data.frame(df,dfCOL)
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="CO2",x=2012, NewValue=185.64, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="CH4",x=2012, NewValue=35, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="N2O",x=2012, NewValue=20, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="HFCs",x=2012, NewValue=2, value=NewValue))
+dfCOLx<-rbind.data.frame(dfCOL,dfCOLx[1,]%>%mutate(Fill2="SF6",x=2012, NewValue=2, value=NewValue))
+dfCOLx<-dfCOL%>%mutate(Fill1="Fill1",FillLabel1="FillLabel1",segment="segment")
+df<-rbind.data.frame(df,dfCOLx)
 df_allX<-rbind.data.frame(df_allX,df); head(df_allX)
 rm(df1)
 
@@ -2734,7 +2844,7 @@ dir<-paste(wdfigsOut,"/",region_i,"/",scenario_ix,sep="")
       # Line Charts
       #-----------    
       
-      l1<-df_all%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits,Fill1)  # For National, by techs
+      l1<-df_all%>%dplyr::select(param,region,NewValue,scenario,x,xLabel,Aggregate,NewUnits)  # For National, by techs
       l1<-l1%>%filter(param==paramx & region==region_i); head(l1)
       
       if(nrow(l1)!=0){
@@ -3303,14 +3413,14 @@ proj4string(df1)<-projX
 df2<-raster::intersect(df1,b1);plot(df2)  # Crop to Layer shpa
 dfxtra<<-raster::intersect(df1,b1);plot(dfxtra) #create larger boundary extents for plotting in tmap
 gridded(dfxtra)<-TRUE
-df3<-df2
+df3<<-df2
 gridded(df3)<-TRUE # Create Gridded Data
 dfxtra<<-dfxtra
 
 # Gridded scenarios Compare (Produced for each scenario)
 for(XanthosScenario_i in unique(df3$scenario)){
 
-dfx<-df3
+dfx<<-df3
 dfx@data<-dfx@data%>%dplyr::select(years,scenario)%>%filter(scenario==XanthosScenario_i) # Choose the years
 dfx@data<-dfx@data%>%dplyr::select(-scenario)  # Remove mean year
 
