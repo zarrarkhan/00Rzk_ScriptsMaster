@@ -231,13 +231,13 @@ colorsX_Diff5<<-c("#693C01","#9C7D6A","white","#8480A2","#473E7A")
 pie(rep(1,length(colorsX_Diff5)),label=names(colorsX_Diff5),col=colorsX_Diff5)
 
 
-colorsAbsolute<<-rev(c("#67001F","#8C0C25","#B2182B","#C43C3C","#D6604D", 
+colorsX_Absolute<<-rev(c("#67001F","#8C0C25","#B2182B","#C43C3C","#D6604D", 
                    "#E58267","#F4A582","#F8C0A4","#FDDBC7",
                    "#FEEDE3","#FFFFFF"))
-pie(rep(1,length(colorsAbsolute)),label=names(colorsAbsolute),col=colorsAbsolute)
+pie(rep(1,length(colorsX_Absolute)),label=names(colorsX_Absolute),col=colorsX_Absolute)
 
-colorsAbsolute5<<-rev(c("#67001F","#D6604D","#F4A582","#FDDBC7","#FFFFFF"))
-pie(rep(1,length(colorsAbsolute5)),label=names(colorsAbsolute5),col=colorsAbsolute5)
+colorsX_Absolute5<<-rev(c("#67001F","#D6604D","#F4A582","#FDDBC7","#FFFFFF"))
+pie(rep(1,length(colorsX_Absolute5)),label=names(colorsX_Absolute5),col=colorsX_Absolute5)
 
 
 colorsDiff<<-c("#693C01","#815A3D","#9C7D6A","#BDA89D","white",

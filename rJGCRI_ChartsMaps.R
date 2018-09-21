@@ -42,7 +42,9 @@ animation_tmapZ <<- function(tm, filename="animation.gif", width=NA, height=NA, 
   if (checkIM!=0) stop("Could not find ImageMagick. Make sure it is installed and included in the systems PATH")
   d <- paste(getwd(), "/tmap_plots", sep="")   #------------ Create Folder for plots
   dir.create(d, showWarnings = FALSE)
-  save_tmap(tm+tm_facets(nrow=1,ncol=1,free.scales=F), filename = paste(d, "plot%03d.png", sep="/"), width=width, height=height) #------------ In tmap tm_facets MAKE SURE nrow/ncol=1, tm_facets(free.scales=FALSE,nrow=1,ncol=1) 
+  save_tmap(tm+tm_facets(nrow=1,ncol=1,free.scales=F) + 
+              tm_layout(outer.margins=c(0,0,0,0),inner.margins = c(0,0,0,0), between.margin = 0), 
+            filename = paste(d, "plot%03d.png", sep="/"), width=width, height=height) #------------ In tmap tm_facets MAKE SURE nrow/ncol=1, tm_facets(free.scales=FALSE,nrow=1,ncol=1) 
   processed <- system("cmd.exe",input=paste("magick -delay ", delay, " ", d, "/*.png \"", filename, "\"", sep=""))
   unlink(d, recursive = TRUE) #-------------- cleaning up plots and temporary variables
   invisible()
@@ -418,7 +420,7 @@ mapX_fill<<- function(data=dfx,scaleData=dfx@data){
 mapX_fillFreeScale<<- function(data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
-  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
+  if(max(range(data@data[complete.cases(data@data),]))<10 & max(range(data@data[complete.cases(data@data),]))>-10){digitsMaps<-2}else{digitsMaps<-1}
   
   tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="pretty",n=nbreaks,
                             midpoint = 0, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
@@ -457,7 +459,7 @@ mapX_raster<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data){
 mapX_rasterFreeScale<<-function(rasterBoundary=dfxtra,data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
-  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
+  if(max(range(data@data[complete.cases(data@data),]))<10 & max(range(data@data[complete.cases(data@data),]))>-10){digitsMaps<-2}else{digitsMaps<-1}
   
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
     tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="pretty",n=nbreaks,
@@ -522,7 +524,7 @@ mapX_fill2VarKmeans<<- function(data=dfx,scaleData=dfx@data,val="NewValue",var1=
 mapX_fillFreeScaleKMeans<<- function(data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
-  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
+  if(max(range(data@data[complete.cases(data@data),]))<10 & max(range(data@data[complete.cases(data@data),]))>-10){digitsMaps<-2}else{digitsMaps<-1}
   
   tm_shape(data) + tm_fill(col=names(data),palette = colx1,style="kmeans",n=nbreaks,
                             midpoint = 0, legend.show=T,showNA=F) + tm_facets(free.scales.fill=T) +
@@ -564,7 +566,7 @@ mapX_rasterKMeans<<- function(rasterBoundary=dfxtra,data=dfx,scaleData=dfx@data)
 mapX_rasterFreeScaleKMeans<<-function(rasterBoundary=dfxtra,data=dfx){
   nbreaks<-5
   colx1<-colorRampPalette(colx)(nbreaks)
-  if(max(range(dfx@data[complete.cases(dfx@data),]))<10 & max(range(dfx@data[complete.cases(dfx@data),]))>-10){digitsMaps<-2}else{digitsMaps<-0}
+  if(max(range(data@data[complete.cases(data@data),]))<10 & max(range(data@data[complete.cases(data@data),]))>-10){digitsMaps<-2}else{digitsMaps<-1}
   
   tm_shape(rasterBoundary) + tm_raster(col=names(rasterBoundary)[1],alpha=0,legend.show=F) +
     tm_shape(data) +  tm_raster(col=names(data),palette = colx1,style="kmeans",n=nbreaks,
