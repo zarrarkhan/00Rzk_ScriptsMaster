@@ -23,14 +23,14 @@ print_PDFPNG <<- function(figure,dir,filename, figWidth_Inch=mapWidthInch, figHe
   if(pdfpng=='pdf'){pdf(paste(dir,"/",filename,".pdf",sep=""),width=figWidth_Inch,height=figHeight_Inch)
     print(figure)
     dev.off()}
-  if(pdfpng=='png'){png(paste(dir,"/",filename,".png",sep=""),width=figWidth_Inch, height=figHeight_Inch, units="in",res=300)
+  if(pdfpng=='png'){png(paste(dir,"/",filename,".png",sep=""),width=figWidth_Inch, height=figHeight_Inch, units="in",res=150)
     print(figure)
     dev.off()}
   if(pdfpng=='both'){
     pdf(paste(dir,"/",filename,".pdf",sep=""),width=figWidth_Inch,height=figHeight_Inch)
     print(figure)
     dev.off()
-    png(paste(dir,"/",filename,".png",sep=""),width=figWidth_Inch, height=figHeight_Inch, units="in",res=300)
+    png(paste(dir,"/",filename,".png",sep=""),width=figWidth_Inch, height=figHeight_Inch, units="in",res=150)
     print(figure)
     dev.off()
   }

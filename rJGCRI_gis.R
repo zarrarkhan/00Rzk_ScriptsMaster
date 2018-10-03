@@ -133,7 +133,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map <- mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
-        m8+if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),sep=""))}
+        map_fig_empty+if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
                    figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng)
@@ -144,7 +144,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
       map <- mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
-        m8+ if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),sep=""))}
+        map_fig_empty+ if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
       selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -160,7 +160,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map <- mapX_rasterFreeScale(rasterBoundary=dfxtra,data=dfx) + m8+
+      map <- mapX_rasterFreeScale(rasterBoundary=dfxtra,data=dfx) + map_fig_empty+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),"\nFree Scale",sep=""))}
       map 
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -171,7 +171,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     #KMEANS
     fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map <- mapX_rasterFreeScaleKMeans(rasterBoundary=dfxtra,data=dfx) + m8+
+      map <- mapX_rasterFreeScaleKMeans(rasterBoundary=dfxtra,data=dfx) + map_fig_empty+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i),"\nFree Scale",sep=""))}
       map 
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -206,7 +206,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-map_fig_filled+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Provinces",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -217,7 +217,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     #KMEANS
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-map_fig_filled+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Provinces",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -236,7 +236,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillFreeScale(data=dfx)+
+      map<-map_fig_filled+mapX_fillFreeScale(data=dfx)+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Provinces Free Scale",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -247,7 +247,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     #KMEANS
     fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillFreeScaleKMeans(data=dfx)+
+      map<-map_fig_filled+mapX_fillFreeScaleKMeans(data=dfx)+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Provinces Free Scale",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -282,7 +282,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-map_fig_filled+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Basins",sep=""))}
       map
       print_PDFPNG(map,dir=dir,fname,
@@ -293,7 +293,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     #KMEANS
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+      map<-map_fig_filled+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Basins",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -312,7 +312,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{get("fname")})){
-      map<-m7+mapX_fillFreeScale(data=dfx)+
+      map<-map_fig_filled+mapX_fillFreeScale(data=dfx)+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Basin Free Scale",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -323,7 +323,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
     #KMEANS
     fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),"_KMEANS",sep="")
     if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-      map<-m7+mapX_fillFreeScaleKMeans(data=dfx)+
+      map<-map_fig_filled+mapX_fillFreeScaleKMeans(data=dfx)+
         if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," Basin Free Scale",sep=""))}
       map
       print_PDFPNG(map,dir=dir,filename=fname,
@@ -361,7 +361,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-m7+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+        map<-map_fig_filled+mapX_fill(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
           if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," subBasins",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -371,7 +371,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       #KMEANS
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_",gsub("X","",year_i),"_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-m7+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
+        map<-map_fig_filled+mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears)+tm_legend(title=paste(gsub("X","",year_i)," (",moduleUnits,")",sep=""))+
           if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," subBasins",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -389,7 +389,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-m7+mapX_fillFreeScale(data=dfx)+
+        map<-map_fig_filled+mapX_fillFreeScale(data=dfx)+
           if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," subBasin Free Scale",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,
@@ -400,7 +400,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       #KMEANS
       fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_BySector_FREESCALE_",gsub("X","",year_i),"_KMEANS",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-m7+mapX_fillFreeScaleKMeans(data=dfx)+
+        map<-map_fig_filled+mapX_fillFreeScaleKMeans(data=dfx)+
           if(titleOn==1){tm_layout(main.title=paste(region_i," ",moduleTitleText," by Sector ",gsub("X","",year_i)," subBasin Free Scale",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,
@@ -616,7 +616,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       
       fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
+        map<-mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+map_fig_empty+tm_legend(title=moduleUnits)+
           if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
         map
         print_PDFPNG(map,dir=dir,filename=fname,
@@ -640,7 +640,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       if(sd(as.matrix(dfCommonScaleYears))!=0){
         fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+m8+tm_legend(title=moduleUnits)+
+          map<-mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfCommonScaleYears)+map_fig_empty+tm_legend(title=moduleUnits)+
             if(titleOn==1){tm_layout(main.title=paste(type,sep=""))} 
           map
           print_PDFPNG(map,dir=dir,filename=fname,
@@ -671,7 +671,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         
         fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")  
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<- mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfgridX) + m8 +tm_legend(title=moduleUnits)+
+          map<- mapX_raster(rasterBoundary=dfxtra,data=dfx,scaleData=dfgridX) + map_fig_empty +tm_legend(title=moduleUnits)+
             if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type,sep=""))} 
           print_PDFPNG(map,dir=dir,filename=fname,
                        figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -693,7 +693,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         if(sd(as.matrix(dfCommonScaleYears))!=0){
           fname<-paste("map_",moduleName,"_grid_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
           if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-            map<- mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfgridX) + m8 +tm_legend(title=moduleUnits)+
+            map<- mapX_rasterKMeans(rasterBoundary=dfxtra,data=dfx,scaleData=dfgridX) + map_fig_empty +tm_legend(title=moduleUnits)+
               if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type,sep=""))} 
             print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -735,7 +735,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       
       fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
+        map<- map_fig_filled + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
           if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Province",sep=""))} 
         map
         print_PDFPNG(map,dir=dir,fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -758,7 +758,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       if(sd(as.matrix(dfCommonScaleYears))!=0){
         fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
+          map<- map_fig_filled + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
             if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Province",sep=""))} 
           map
           print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -787,7 +787,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         
         fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<- m7 + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
+          map<- map_fig_filled + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
             if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Province",sep=""))} 
           print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -807,7 +807,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         if(sd(as.matrix(dfCommonScaleYears))!=0){
           fname<-paste("map_",moduleName,"_polyAdmin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
           if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-            map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
+            map<- map_fig_filled + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
               if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Province",sep=""))} 
             print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -849,7 +849,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       
       fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
       if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-        map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
+        map<- map_fig_filled + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
           if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Basin",sep=""))}
         map
         print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -871,7 +871,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
       if(sd(as.matrix(dfCommonScaleYears))!=0){
         fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
+          map<- map_fig_filled + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
             if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Basin",sep=""))}
           map
           print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -897,7 +897,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         
         fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<- m7 + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
+          map<- map_fig_filled + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
             if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Basin",sep=""))} 
           print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
           selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -917,7 +917,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         if(sd(as.matrix(dfCommonScaleYears))!=0){
           fname<-paste("map_",moduleName,"_polyBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
           if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-            map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
+            map<- map_fig_filled + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
               if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by Basin",sep=""))} 
             print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -960,7 +960,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         
         fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_OWNSCALE",sep="")
         if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-          map<- m7 + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
+          map<- map_fig_filled + mapX_fill(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
             if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by subBasin",sep=""))}
           map
           print_PDFPNG(map,dir=dir,filename=fname,
@@ -984,7 +984,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
         if(sd(as.matrix(dfCommonScaleYears))!=0){
           fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_KMEANS_OWNSCALE",sep="")
           if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-            map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
+            map<- map_fig_filled + mapX_fillKMeans(data=dfx,scaleData=dfCommonScaleYears) + tm_legend(title=moduleUnits) +
               if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by subBasin",sep=""))}
             map
             print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
@@ -1010,7 +1010,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
           
           fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems",sep="")
           if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-            map<- m7 + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
+            map<- map_fig_filled + mapX_fill(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
               if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by subBasin",sep=""))} 
             print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
             selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
@@ -1030,7 +1030,7 @@ maps_ReAggregate <- function(df=df,region_i=region_i,scenario_i=scenario_ix,
           if(sd(as.matrix(dfCommonScaleYears))!=0){
             fname<-paste("subBasin/map_",moduleName,"_polysubBasin_",region_i,"_",moduleParam,"_",type,"_",min(rangeX),"to",max(rangeX),"_1ScaleDems_KMEANS",sep="")
             if(gsub(".*/","",fname) %in% (if(selectFigsOnly==1){selectFigsparams}else{gsub(".*/","",fname)})){
-              map<- m7 + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
+              map<- map_fig_filled + mapX_fillKMeans(data=dfx,scaleData=dfgridX) + tm_legend(title=moduleUnits) +
                 if(titleOn==1){tm_layout(main.title=paste(region_i,moduleTitleText,type," by subBasin",sep=""))} 
               print_PDFPNG(map,dir=dir,filename=fname,figWidth_Inch=mapWidthInch,figHeight_Inch=mapHeightInch,pdfpng=pdfpng);
               selectedFigs<-c(selectedFigs,paste(dir,"/",fname,".pdf",sep=""))
